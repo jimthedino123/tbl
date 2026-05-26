@@ -1,594 +1,1184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TBL Builder</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TBL Editor — Binary Table Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-  font-family:Arial,Helvetica,sans-serif;
-}
+  :root {
+    --bg:       #080b12;
+    --surface:  #0d1220;
+    --panel:    #111827;
+    --border:   #1e2d45;
+    --accent:   #00d4ff;
+    --accent2:  #7c3aed;
+    --accent3:  #f59e0b;
+    --danger:   #ef4444;
+    --success:  #10b981;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --glow:     0 0 20px rgba(0,212,255,0.3);
+    --glow2:    0 0 20px rgba(124,58,237,0.3);
+  }
 
-body{
-  background:#0f1117;
-  color:white;
-  padding:30px;
-}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.container{
-  max-width:1200px;
-  margin:auto;
-}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-h1{
-  font-size:42px;
-  margin-bottom:10px;
-}
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-.subtitle{
-  color:#aaa;
-  margin-bottom:25px;
-}
+  /* ── SCANLINES ── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      transparent, transparent 2px,
+      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
 
-.toolbar{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:20px;
-}
+  /* ── HEADER ── */
+  header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,11,18,0.85);
+    backdrop-filter: blur(12px);
+  }
 
-button{
-  background:#1e2638;
-  border:none;
-  color:white;
-  padding:12px 18px;
-  border-radius:10px;
-  cursor:pointer;
-  transition:0.2s;
-  font-size:15px;
-}
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 26px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: var(--glow);
+    display: flex; align-items: center; gap: 12px;
+  }
 
-button:hover{
-  background:#2f3a56;
-}
+  .logo span { color: var(--text); }
 
-.table-wrap{
-  overflow:auto;
-  border-radius:16px;
-  border:1px solid #2d3448;
-}
+  .logo-badge {
+    font-size: 9px;
+    background: var(--accent);
+    color: var(--bg);
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    letter-spacing: 2px;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:700px;
-}
+  .header-actions { display: flex; gap: 10px; align-items: center; }
 
-th{
-  background:#1a2030;
-  padding:14px;
-  border:1px solid #2c3347;
-}
+  /* ── BUTTONS ── */
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    background: transparent;
+    color: var(--text);
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: var(--glow); }
 
-td{
-  border:1px solid #2c3347;
-  padding:0;
-}
+  .btn-primary {
+    background: var(--accent); color: var(--bg);
+    border-color: var(--accent); font-weight: 700;
+  }
+  .btn-primary:hover { background: #00b8d9; box-shadow: var(--glow); color: var(--bg); }
 
-input{
-  width:100%;
-  background:#101521;
-  border:none;
-  color:white;
-  padding:14px;
-  outline:none;
-}
+  .btn-danger { border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; box-shadow: 0 0 20px rgba(239,68,68,0.4); }
 
-.export-area{
-  margin-top:25px;
-}
+  .btn-success { border-color: var(--success); color: var(--success); }
+  .btn-success:hover { background: var(--success); color: var(--bg); box-shadow: 0 0 20px rgba(16,185,129,0.4); }
 
-textarea{
-  width:100%;
-  height:220px;
-  background:#101521;
-  border:1px solid #2c3347;
-  color:#7dff9c;
-  padding:15px;
-  border-radius:12px;
-  resize:vertical;
-}
+  .btn-purple { border-color: var(--accent2); color: var(--accent2); }
+  .btn-purple:hover { background: var(--accent2); color: #fff; box-shadow: var(--glow2); }
 
-.section{
-  margin-top:45px;
-}
+  .btn-sm { padding: 4px 10px; font-size: 10px; }
+  .btn-xs { padding: 2px 7px; font-size: 10px; }
 
-.code{
-  background:#0b0f18;
-  border:1px solid #2c3347;
-  padding:18px;
-  border-radius:14px;
-  overflow:auto;
-  white-space:pre-wrap;
-  line-height:1.5;
-  margin-top:15px;
-}
+  /* ── LAYOUT ── */
+  .workspace {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: auto 1fr auto;
+    min-height: calc(100vh - 65px);
+  }
 
-.download-link{
-  display:inline-block;
-  margin-top:15px;
-  text-decoration:none;
-  color:white;
-  background:#2862ff;
-  padding:12px 16px;
-  border-radius:10px;
-}
+  /* ── SIDEBAR ── */
+  .sidebar {
+    grid-row: 1 / 3;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+  }
 
-.info{
-  background:#151c2c;
-  padding:16px;
-  border-radius:12px;
-  margin-bottom:20px;
-  color:#c9d3ef;
-  line-height:1.6;
-}
+  .sidebar-section {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sidebar-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  /* ── COLUMN EDITOR ── */
+  .col-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+  .col-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center; gap: 6px;
+    padding: 8px 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: border-color 0.15s;
+  }
+  .col-item:hover { border-color: var(--accent); }
+
+  .col-name {
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .col-type-badge {
+    font-size: 9px; letter-spacing: 1px; padding: 2px 5px;
+    border-radius: 2px; text-transform: uppercase; font-weight: 700;
+  }
+  .type-0 { background: rgba(0,212,255,0.15); color: var(--accent); }
+  .type-1 { background: rgba(245,158,11,0.15); color: var(--accent3); }
+  .type-2 { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .type-3 { background: rgba(16,185,129,0.15); color: var(--success); }
+
+  /* ── ADD COLUMN FORM ── */
+  .add-col-form { display: flex; flex-direction: column; gap: 8px; }
+
+  input[type="text"], select {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type="text"]:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0,212,255,0.15);
+  }
+  select option { background: var(--panel); }
+
+  /* ── MAIN EDITOR AREA ── */
+  .editor-area {
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  .editor-toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-wrap: wrap;
+  }
+
+  .toolbar-group { display: flex; gap: 6px; align-items: center; }
+  .toolbar-sep { width: 1px; height: 24px; background: var(--border); }
+
+  .table-wrap {
+    flex: 1;
+    overflow: auto;
+    padding: 20px;
+  }
+
+  /* ── THE BINARY TABLE ── */
+  .tbl-editor-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    font-size: 13px;
+  }
+
+  .tbl-editor-table th {
+    background: var(--panel);
+    color: var(--accent);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    position: sticky; top: 0; z-index: 2;
+    user-select: none;
+  }
+  .tbl-editor-table th:first-child {
+    background: rgba(0,0,0,0.3);
+    color: var(--muted);
+    width: 50px;
+    font-size: 9px;
+  }
+
+  .th-inner { display: flex; flex-direction: column; gap: 2px; }
+  .th-type { font-size: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-weight: normal; }
+
+  .tbl-editor-table td {
+    padding: 0;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: background 0.1s;
+  }
+  .tbl-editor-table td:first-child {
+    background: rgba(0,0,0,0.2);
+    color: var(--muted);
+    font-size: 10px;
+    text-align: center;
+    padding: 0 8px;
+    width: 50px;
+    pointer-events: none;
+  }
+
+  .tbl-editor-table tr:hover td { background: var(--panel); }
+  .tbl-editor-table tr:hover td:first-child { background: rgba(0,0,0,0.3); }
+
+  .cell-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 8px 12px;
+    line-height: 1.4;
+  }
+  .cell-input:focus { background: rgba(0,212,255,0.05); }
+  .cell-input.type-bool { text-align: center; cursor: pointer; }
+  .cell-input.type-bool.val-true { color: var(--success); }
+  .cell-input.type-bool.val-false { color: var(--muted); }
+
+  .td-selected { outline: 2px solid var(--accent) !important; outline-offset: -2px; }
+
+  /* ── STATUS BAR ── */
+  .statusbar {
+    grid-column: 1 / 3;
+    display: flex; align-items: center; gap: 20px;
+    padding: 8px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 11px; color: var(--muted);
+  }
+  .status-item { display: flex; gap: 6px; align-items: center; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+  .status-dot.warn { background: var(--accent3); }
+
+  /* ── HEX VIEWER ── */
+  .hex-panel {
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+    padding: 14px 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    max-height: 140px;
+    overflow-y: auto;
+    display: none;
+  }
+  .hex-panel.visible { display: block; }
+  .hex-row { display: flex; gap: 12px; line-height: 1.8; }
+  .hex-addr { color: var(--accent); min-width: 60px; }
+  .hex-bytes { color: var(--text); letter-spacing: 1px; flex: 1; }
+  .hex-ascii { color: var(--accent2); min-width: 140px; }
+  .hex-byte-accent { color: var(--accent); }
+  .hex-byte-magic { color: var(--accent3); font-weight: bold; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    width: 560px;
+    max-width: 95vw;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6), var(--glow);
+  }
+  .modal h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px; letter-spacing: 3px;
+    color: var(--accent); margin-bottom: 20px;
+  }
+  .modal pre {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 4px; padding: 14px;
+    font-size: 11px; overflow-x: auto;
+    color: var(--text); line-height: 1.7;
+    margin-bottom: 12px;
+  }
+  .modal .close-btn { margin-top: 16px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 20px; gap: 16px;
+    color: var(--muted); text-align: center;
+  }
+  .empty-icon {
+    font-size: 48px;
+    filter: grayscale(1) opacity(0.3);
+  }
+  .empty-title { font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 2px; color: var(--border); }
+  .empty-sub { font-size: 11px; max-width: 300px; line-height: 1.6; }
+
+  /* ── TOAST ── */
+  .toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    padding: 10px 18px; border-radius: 4px; font-size: 12px;
+    border: 1px solid; animation: toastIn 0.2s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .toast.success { background: rgba(16,185,129,0.15); border-color: var(--success); color: var(--success); }
+  .toast.error { background: rgba(239,68,68,0.15); border-color: var(--danger); color: var(--danger); }
+  .toast.info { background: rgba(0,212,255,0.1); border-color: var(--accent); color: var(--accent); }
+  @keyframes toastIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform:none; } }
+
+  /* ── SCROLLBARS ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* ── DRAG HANDLE ── */
+  .col-drag { cursor: grab; color: var(--border); font-size: 14px; line-height: 1; }
+  .col-drag:hover { color: var(--accent); }
+
+  /* ── FILE INFO ── */
+  .file-info {
+    padding: 14px 20px;
+    background: rgba(0,212,255,0.05);
+    border-bottom: 1px solid var(--border);
+    display: none;
+    font-size: 11px;
+  }
+  .file-info.visible { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+  .file-info-item { color: var(--muted); }
+  .file-info-item strong { color: var(--accent); }
 </style>
 </head>
 <body>
 
-<div class="container">
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
 
-<h1>.TBL File Generator</h1>
-<p class="subtitle">Binary JSON table file creator</p>
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    TBL<span>STUDIO</span>
+    <span class="logo-badge">v1.0</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="showSnippetModal()">&#60;/&#62; Embed Code</button>
+    <button class="btn btn-purple" onclick="triggerOpen()">&#8679; Open .tbl</button>
+    <button class="btn btn-primary" onclick="saveTbl()">&#8595; Save .tbl</button>
+  </div>
+</header>
 
-<div class="info">
-A .tbl file stores table data as binary-encoded JSON.
-This editor lets you create, export, import and preview TBL files.
+<div class="workspace">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+
+    <!-- Column Manager -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Columns</div>
+      <div class="col-list" id="colList"></div>
+
+      <div class="add-col-form">
+        <input type="text" id="newColName" placeholder="column_name" maxlength="64" />
+        <select id="newColType">
+          <option value="0">STRING — text</option>
+          <option value="1">INT32 — integer</option>
+          <option value="2">FLOAT64 — decimal</option>
+          <option value="3">BOOL — true / false</option>
+        </select>
+        <button class="btn btn-success" onclick="addColumn()">+ Add Column</button>
+      </div>
+    </div>
+
+    <!-- Row Controls -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Rows</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn" onclick="addRow()">+ Add Row</button>
+        <button class="btn btn-danger" onclick="deleteSelectedRows()">− Delete Selected</button>
+        <button class="btn" onclick="duplicateSelectedRows()">⎘ Duplicate Row</button>
+        <button class="btn" onclick="clearTable()">✕ Clear All Rows</button>
+      </div>
+    </div>
+
+    <!-- Table Settings -->
+    <div class="sidebar-section">
+      <div class="sidebar-title">Options</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="btn" id="hexToggle" onclick="toggleHex()">&#11001; Hex Preview</button>
+        <button class="btn btn-danger" onclick="newTable()">⬜ New Table</button>
+      </div>
+      <div style="margin-top:14px; font-size:10px; color: var(--muted); line-height:1.8;">
+        Binary format: <strong style="color:var(--accent)">TBL v1</strong><br>
+        Magic: <code style="color:var(--accent3)">54 42 4C</code><br>
+        Endian: Big-endian
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN EDITOR ── -->
+  <main class="editor-area">
+
+    <!-- File info bar (shown after loading) -->
+    <div class="file-info" id="fileInfoBar"></div>
+
+    <!-- Toolbar -->
+    <div class="editor-toolbar">
+      <div class="toolbar-group">
+        <button class="btn btn-sm" onclick="selectAllRows()">Select All</button>
+        <button class="btn btn-sm" onclick="deselectAll()">Deselect</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <button class="btn btn-sm" onclick="sortByCol()">&#8645; Sort</button>
+        <select id="sortColSel" style="width:130px; padding:4px 8px; font-size:11px;"></select>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <input type="text" id="searchInput" placeholder="Search rows..." style="width:160px;padding:4px 10px;font-size:11px;" oninput="filterRows()" />
+        <button class="btn btn-sm btn-danger" onclick="clearSearch()">✕</button>
+      </div>
+      <div style="flex:1"></div>
+      <span id="selectionInfo" style="font-size:10px;color:var(--muted)"></span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap" id="tableWrap">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">⊞</div>
+        <div class="empty-title">NO COLUMNS DEFINED</div>
+        <div class="empty-sub">Add columns using the sidebar, then start entering data. Save as a real binary .tbl file.</div>
+      </div>
+      <table class="tbl-editor-table" id="editorTable" style="display:none;">
+        <thead id="editorThead"></thead>
+        <tbody id="editorTbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Hex panel -->
+    <div class="hex-panel" id="hexPanel"></div>
+
+  </main>
+
+  <!-- Status bar -->
+  <footer class="statusbar">
+    <div class="status-item"><span class="status-dot" id="statusDot"></span> <span id="statusText">Ready</span></div>
+    <div class="status-item">Rows: <strong id="rowCountEl">0</strong></div>
+    <div class="status-item">Cols: <strong id="colCountEl">0</strong></div>
+    <div class="status-item">Est. size: <strong id="sizeEl">—</strong></div>
+    <div style="flex:1"></div>
+    <div style="font-size:10px;color:var(--border);">tbljs.netlify.app/tbl.js</div>
+  </footer>
 </div>
 
-<div class="toolbar">
-  <button onclick="addRow()">Add Row</button>
-  <button onclick="addColumn()">Add Column</button>
-  <button onclick="exportTBL()">Export .tbl</button>
-  <button onclick="importTBL()">Import .tbl</button>
-  <button onclick="previewJSON()">Preview JSON</button>
+<!-- ── SNIPPET MODAL ── -->
+<div class="modal-overlay" id="snippetModal">
+  <div class="modal">
+    <h2>&#60;/&#62; EMBED CODE SNIPPET</h2>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px;">Add this to your HTML page to load and display <code>.tbl</code> files:</p>
+
+    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">1. Include the library:</p>
+    <pre id="snippetScript"></pre>
+
+    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">2. Display a .tbl file from a URL:</p>
+    <pre id="snippetUrl"></pre>
+
+    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">3. Load from a file input:</p>
+    <pre id="snippetFile"></pre>
+
+    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">4. Parse raw binary data yourself:</p>
+    <pre id="snippetParse"></pre>
+
+    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">5. Encode data to binary .tbl:</p>
+    <pre id="snippetEncode"></pre>
+
+    <button class="btn close-btn" onclick="closeModal()">Close</button>
+  </div>
 </div>
 
-<div class="table-wrap">
-  <table id="editorTable">
-    <thead>
-      <tr id="headerRow">
-        <th><input value="Name"></th>
-        <th><input value="Age"></th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-      <tr>
-        <td><input value="Tyler"></td>
-        <td><input value="13"></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- REPLACE YOUR EXPORT FUNCTION WITH THIS -->
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept=".tbl" style="display:none;" onchange="loadTblFile(event)" />
 
 <script>
-function stringToBinary(str){
+// ════════════════════════════════════════════════════════════════════════════
+//  TBL FORMAT CONSTANTS
+// ════════════════════════════════════════════════════════════════════════════
+const TYPE = { STRING: 0, INT32: 1, FLOAT64: 2, BOOL: 3 };
+const TYPE_NAME = ['STRING', 'INT32', 'FLOAT64', 'BOOL'];
+const MAGIC = [0x54, 0x42, 0x4C];
+const VERSION = 1;
 
-  return str
-    .split("")
-    .map(char =>
-      char.charCodeAt(0)
-        .toString(2)
-        .padStart(8,"0")
-    )
-    .join("");
+// ════════════════════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════════════════════
+let columns  = [];   // [{ name, type }]
+let rows     = [];   // [[val, val, ...], ...]
+let selectedRows = new Set();
+let hexVisible = false;
+let currentFile = null;
+let filterTerm = '';
 
-}
+// ════════════════════════════════════════════════════════════════════════════
+//  BINARY ENCODER
+// ════════════════════════════════════════════════════════════════════════════
+function encode() {
+  const enc = new TextEncoder();
+  const colNameBytes = columns.map(c => enc.encode(c.name));
 
-function binaryToString(binary){
+  let size = 3 + 1 + 2 + 4;
+  for (let i = 0; i < columns.length; i++) size += 1 + 1 + colNameBytes[i].length;
 
-  let result = "";
-
-  for(let i=0;i<binary.length;i+=8){
-
-    const byte = binary.slice(i,i+8);
-
-    result += String.fromCharCode(
-      parseInt(byte,2)
-    );
-
+  const strCells = [];
+  for (let r = 0; r < rows.length; r++) {
+    strCells.push([]);
+    for (let c = 0; c < columns.length; c++) {
+      const t = columns[c].type, v = rows[r][c];
+      if (t === TYPE.STRING) {
+        const b = enc.encode(v == null ? '' : String(v));
+        strCells[r].push(b); size += 2 + b.length;
+      } else if (t === TYPE.INT32)   { strCells[r].push(null); size += 4; }
+        else if (t === TYPE.FLOAT64) { strCells[r].push(null); size += 8; }
+        else if (t === TYPE.BOOL)    { strCells[r].push(null); size += 1; }
+    }
   }
 
-  return result;
+  const buf = new ArrayBuffer(size);
+  const view = new DataView(buf);
+  const bytes = new Uint8Array(buf);
+  let o = 0;
 
-}
+  bytes[o++] = MAGIC[0]; bytes[o++] = MAGIC[1]; bytes[o++] = MAGIC[2];
+  bytes[o++] = VERSION;
+  view.setUint16(o, columns.length, false); o += 2;
+  view.setUint32(o, rows.length, false); o += 4;
 
-function exportTBL(){
+  for (let i = 0; i < columns.length; i++) {
+    bytes[o++] = columns[i].type;
+    bytes[o++] = colNameBytes[i].length;
+    bytes.set(colNameBytes[i], o); o += colNameBytes[i].length;
+  }
 
-  const data = getTableData();
-
-  const json = JSON.stringify(data);
-
-  const binary = stringToBinary(json);
-
-  const blob = new Blob(
-    [binary],
-    {
-      type:"application/octet-stream"
+  for (let r = 0; r < rows.length; r++) {
+    for (let c = 0; c < columns.length; c++) {
+      const t = columns[c].type, v = rows[r][c];
+      if (t === TYPE.STRING) {
+        const b = strCells[r][c];
+        view.setUint16(o, b.length, false); o += 2;
+        bytes.set(b, o); o += b.length;
+      } else if (t === TYPE.INT32) {
+        view.setInt32(o, v == null ? 0 : (parseInt(v,10)||0), false); o += 4;
+      } else if (t === TYPE.FLOAT64) {
+        view.setFloat64(o, v == null ? 0 : (parseFloat(v)||0), false); o += 8;
+      } else if (t === TYPE.BOOL) {
+        bytes[o++] = v ? 1 : 0;
+      }
     }
-  );
+  }
+  return buf;
+}
 
-  const a = document.createElement("a");
+// ════════════════════════════════════════════════════════════════════════════
+//  BINARY DECODER
+// ════════════════════════════════════════════════════════════════════════════
+function decode(arrayBuffer) {
+  const view = new DataView(arrayBuffer);
+  const bytes = new Uint8Array(arrayBuffer);
+  const dec = new TextDecoder();
+  let o = 0;
 
-  a.href = URL.createObjectURL(blob);
+  if (bytes[0] !== MAGIC[0] || bytes[1] !== MAGIC[1] || bytes[2] !== MAGIC[2])
+    throw new Error('Not a TBL file (bad magic bytes: expected 54 42 4C)');
 
-  a.download = "table.tbl";
+  o = 3;
+  const version = bytes[o++];
+  if (version !== VERSION) throw new Error(`Unsupported TBL version: ${version}`);
 
+  const colCount = view.getUint16(o, false); o += 2;
+  const rowCount = view.getUint32(o, false); o += 4;
+
+  const cols = [];
+  for (let i = 0; i < colCount; i++) {
+    const type = bytes[o++];
+    const nameLen = bytes[o++];
+    const name = dec.decode(bytes.slice(o, o + nameLen)); o += nameLen;
+    cols.push({ name, type });
+  }
+
+  const rowData = [];
+  for (let r = 0; r < rowCount; r++) {
+    const row = [];
+    for (let c = 0; c < colCount; c++) {
+      const t = cols[c].type;
+      if (t === TYPE.STRING) {
+        const len = view.getUint16(o, false); o += 2;
+        row.push(dec.decode(bytes.slice(o, o + len))); o += len;
+      } else if (t === TYPE.INT32)   { row.push(view.getInt32(o, false));   o += 4; }
+        else if (t === TYPE.FLOAT64) { row.push(view.getFloat64(o, false)); o += 8; }
+        else if (t === TYPE.BOOL)    { row.push(bytes[o++] !== 0); }
+    }
+    rowData.push(row);
+  }
+  return { columns: cols, rows: rowData };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════════════════════════
+function render() {
+  const thead = document.getElementById('editorThead');
+  const tbody = document.getElementById('editorTbody');
+  const empty = document.getElementById('emptyState');
+  const table = document.getElementById('editorTable');
+
+  if (columns.length === 0) {
+    empty.style.display = 'flex'; table.style.display = 'none';
+  } else {
+    empty.style.display = 'none'; table.style.display = '';
+  }
+
+  // Thead
+  let hHtml = '<tr><th>#</th>';
+  columns.forEach((col, ci) => {
+    hHtml += `<th>
+      <div class="th-inner">
+        <span>${esc(col.name)}</span>
+        <span class="th-type">${TYPE_NAME[col.type]}</span>
+      </div>
+    </th>`;
+  });
+  hHtml += '</tr>';
+  thead.innerHTML = hHtml;
+
+  // Tbody
+  const term = filterTerm.toLowerCase();
+  let visibleCount = 0;
+
+  tbody.innerHTML = '';
+  rows.forEach((row, ri) => {
+    // Filter
+    if (term && !row.some(v => String(v).toLowerCase().includes(term))) return;
+    visibleCount++;
+
+    const tr = document.createElement('tr');
+    tr.dataset.ri = ri;
+    if (selectedRows.has(ri)) tr.classList.add('row-selected');
+
+    let rowHtml = `<td>${ri + 1}</td>`;
+    columns.forEach((col, ci) => {
+      const val = row[ci];
+      if (col.type === TYPE.BOOL) {
+        rowHtml += `<td><input class="cell-input type-bool ${val ? 'val-true' : 'val-false'}"
+          data-ri="${ri}" data-ci="${ci}" data-type="bool"
+          value="${val ? 'true' : 'false'}" readonly
+          onclick="toggleBool(${ri},${ci})" /></td>`;
+      } else {
+        rowHtml += `<td><input class="cell-input"
+          data-ri="${ri}" data-ci="${ci}" data-type="${col.type}"
+          value="${esc(val == null ? '' : String(val))}"
+          oninput="onCellInput(this,${ri},${ci})"
+          onfocus="selectCell(this)" /></td>`;
+      }
+    });
+
+    tr.innerHTML = rowHtml;
+    tr.addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      toggleRowSelect(ri);
+    });
+    tbody.appendChild(tr);
+  });
+
+  updateStatus(visibleCount);
+  renderColList();
+  updateSortSelect();
+  if (hexVisible) renderHex();
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderColList() {
+  const list = document.getElementById('colList');
+  if (columns.length === 0) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px;">No columns yet</div>';
+    return;
+  }
+  list.innerHTML = columns.map((col, ci) => `
+    <div class="col-item" draggable="true">
+      <span class="col-name">${esc(col.name)}</span>
+      <span class="col-type-badge type-${col.type}">${TYPE_NAME[col.type].slice(0,3)}</span>
+      <button class="btn btn-xs btn-danger" onclick="removeColumn(${ci})">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateStatus(visible) {
+  document.getElementById('rowCountEl').textContent = filterTerm ? `${visible}/${rows.length}` : rows.length;
+  document.getElementById('colCountEl').textContent = columns.length;
+
+  const buf = columns.length > 0 ? encode() : null;
+  document.getElementById('sizeEl').textContent = buf ? formatBytes(buf.byteLength) : '—';
+  document.getElementById('statusText').textContent = 'Ready';
+}
+
+function formatBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n/1024).toFixed(1) + ' KB';
+  return (n/1048576).toFixed(2) + ' MB';
+}
+
+function updateSortSelect() {
+  const sel = document.getElementById('sortColSel');
+  sel.innerHTML = columns.map((col, i) => `<option value="${i}">${col.name}</option>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CELL / ROW ACTIONS
+// ════════════════════════════════════════════════════════════════════════════
+function onCellInput(input, ri, ci) {
+  rows[ri][ci] = input.value;
+  if (hexVisible) renderHex();
+  updateStatus(rows.length);
+}
+
+function selectCell(input) {
+  document.querySelectorAll('.td-selected').forEach(el => el.classList.remove('td-selected'));
+  input.parentElement.classList.add('td-selected');
+}
+
+function toggleBool(ri, ci) {
+  rows[ri][ci] = !rows[ri][ci];
+  render();
+}
+
+function toggleRowSelect(ri) {
+  if (selectedRows.has(ri)) selectedRows.delete(ri);
+  else selectedRows.add(ri);
+  const rows_el = document.querySelectorAll(`tr[data-ri="${ri}"]`);
+  rows_el.forEach(tr => tr.classList.toggle('row-selected', selectedRows.has(ri)));
+  document.getElementById('selectionInfo').textContent =
+    selectedRows.size ? `${selectedRows.size} row(s) selected` : '';
+}
+
+function selectAllRows() {
+  rows.forEach((_, i) => selectedRows.add(i));
+  document.getElementById('selectionInfo').textContent = `${selectedRows.size} row(s) selected`;
+  render();
+}
+
+function deselectAll() {
+  selectedRows.clear();
+  document.getElementById('selectionInfo').textContent = '';
+  render();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  COLUMN ACTIONS
+// ════════════════════════════════════════════════════════════════════════════
+function addColumn() {
+  const nameInput = document.getElementById('newColName');
+  const typeInput = document.getElementById('newColType');
+  const name = nameInput.value.trim().replace(/\s+/g, '_');
+  if (!name) { toast('Column name required', 'error'); return; }
+  if (columns.find(c => c.name === name)) { toast('Column name must be unique', 'error'); return; }
+
+  const type = parseInt(typeInput.value);
+  columns.push({ name, type });
+
+  // Add default cell to all rows
+  let def;
+  if (type === TYPE.BOOL) def = false;
+  else if (type === TYPE.INT32) def = 0;
+  else if (type === TYPE.FLOAT64) def = 0.0;
+  else def = '';
+  rows.forEach(row => row.push(def));
+
+  nameInput.value = '';
+  render();
+  toast(`Column "${name}" added`, 'success');
+}
+
+function removeColumn(ci) {
+  const name = columns[ci].name;
+  columns.splice(ci, 1);
+  rows.forEach(row => row.splice(ci, 1));
+  render();
+  toast(`Column "${name}" removed`, 'info');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ROW ACTIONS
+// ════════════════════════════════════════════════════════════════════════════
+function addRow() {
+  if (columns.length === 0) { toast('Add at least one column first', 'error'); return; }
+  const row = columns.map(col => {
+    if (col.type === TYPE.BOOL) return false;
+    if (col.type === TYPE.INT32 || col.type === TYPE.FLOAT64) return 0;
+    return '';
+  });
+  rows.push(row);
+  render();
+  // Scroll to bottom
+  const wrap = document.getElementById('tableWrap');
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+function deleteSelectedRows() {
+  if (selectedRows.size === 0) { toast('No rows selected', 'error'); return; }
+  rows = rows.filter((_, i) => !selectedRows.has(i));
+  selectedRows.clear();
+  render();
+  toast('Rows deleted', 'info');
+}
+
+function duplicateSelectedRows() {
+  if (selectedRows.size === 0) { toast('No rows selected', 'error'); return; }
+  const toAdd = [...selectedRows].sort().map(i => [...rows[i]]);
+  rows.push(...toAdd);
+  selectedRows.clear();
+  render();
+  toast(`Duplicated ${toAdd.length} row(s)`, 'success');
+}
+
+function clearTable() {
+  if (rows.length === 0) return;
+  if (!confirm(`Clear all ${rows.length} rows? This cannot be undone.`)) return;
+  rows = [];
+  selectedRows.clear();
+  render();
+  toast('All rows cleared', 'info');
+}
+
+function newTable() {
+  if (!confirm('Start a new empty table? All unsaved data will be lost.')) return;
+  columns = []; rows = []; selectedRows.clear();
+  currentFile = null;
+  document.getElementById('fileInfoBar').classList.remove('visible');
+  render();
+  toast('New table created', 'info');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SORT / FILTER
+// ════════════════════════════════════════════════════════════════════════════
+function sortByCol() {
+  const ci = parseInt(document.getElementById('sortColSel').value);
+  if (isNaN(ci)) return;
+  rows.sort((a, b) => {
+    const va = a[ci], vb = b[ci];
+    if (typeof va === 'boolean') return va === vb ? 0 : va ? -1 : 1;
+    if (typeof va === 'number') return va - vb;
+    return String(va).localeCompare(String(vb));
+  });
+  render();
+  toast(`Sorted by "${columns[ci].name}"`, 'info');
+}
+
+function filterRows() {
+  filterTerm = document.getElementById('searchInput').value;
+  render();
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  filterTerm = '';
+  render();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  HEX VIEWER
+// ════════════════════════════════════════════════════════════════════════════
+function toggleHex() {
+  hexVisible = !hexVisible;
+  const panel = document.getElementById('hexPanel');
+  panel.classList.toggle('visible', hexVisible);
+  document.getElementById('hexToggle').textContent = hexVisible ? '⊟ Hide Hex' : '⊞ Hex Preview';
+  if (hexVisible) renderHex();
+}
+
+function renderHex() {
+  if (columns.length === 0) { document.getElementById('hexPanel').innerHTML = '<span style="color:var(--muted)">No data to preview.</span>'; return; }
+  const buf = encode();
+  const bytes = new Uint8Array(buf);
+  const panel = document.getElementById('hexPanel');
+  const maxBytes = 256;
+  let html = '';
+
+  for (let i = 0; i < Math.min(bytes.length, maxBytes); i += 16) {
+    const chunk = bytes.slice(i, i + 16);
+    const addr = i.toString(16).padStart(8, '0').toUpperCase();
+    let hexStr = '', ascii = '';
+
+    chunk.forEach((b, idx) => {
+      const hex = b.toString(16).padStart(2, '0').toUpperCase();
+      const isHeader = i + idx < 10; // magic + version area
+      const cls = (i + idx) < 3 ? 'hex-byte-magic' : (i + idx) < 10 ? 'hex-byte-accent' : '';
+      hexStr += `<span class="${cls}">${hex}</span> `;
+      ascii += (b >= 32 && b < 127) ? String.fromCharCode(b) : '·';
+    });
+
+    html += `<div class="hex-row">
+      <span class="hex-addr">${addr}</span>
+      <span class="hex-bytes">${hexStr}</span>
+      <span class="hex-ascii">${ascii}</span>
+    </div>`;
+  }
+
+  if (bytes.length > maxBytes) {
+    html += `<div style="color:var(--muted);padding:4px 0;">… ${bytes.length - maxBytes} more bytes (${formatBytes(bytes.length)} total)</div>`;
+  }
+
+  panel.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  SAVE / LOAD
+// ════════════════════════════════════════════════════════════════════════════
+function saveTbl() {
+  if (columns.length === 0) { toast('Add columns before saving', 'error'); return; }
+
+  // Flush all input values first
+  document.querySelectorAll('.cell-input').forEach(input => {
+    const ri = parseInt(input.dataset.ri);
+    const ci = parseInt(input.dataset.ci);
+    if (!isNaN(ri) && !isNaN(ci)) {
+      const t = columns[ci].type;
+      if (t === TYPE.INT32) rows[ri][ci] = parseInt(input.value,10)||0;
+      else if (t === TYPE.FLOAT64) rows[ri][ci] = parseFloat(input.value)||0;
+      else if (t !== TYPE.BOOL) rows[ri][ci] = input.value;
+    }
+  });
+
+  const buf = encode();
+  const blob = new Blob([buf], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (currentFile || 'table') + '.tbl';
   a.click();
-
+  URL.revokeObjectURL(url);
+  toast(`Saved ${formatBytes(buf.byteLength)} binary .tbl file`, 'success');
 }
 
-function importTBL(){
+function triggerOpen() {
+  document.getElementById('fileInput').click();
+}
 
-  const input = document.createElement("input");
+function loadTblFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const result = decode(e.target.result);
+      columns = result.columns;
+      rows = result.rows;
+      selectedRows.clear();
+      currentFile = file.name.replace(/\.tbl$/i, '');
 
-  input.type = "file";
+      const bar = document.getElementById('fileInfoBar');
+      bar.classList.add('visible');
+      bar.innerHTML = `
+        <div class="file-info-item">File: <strong>${file.name}</strong></div>
+        <div class="file-info-item">Size: <strong>${formatBytes(file.size)}</strong></div>
+        <div class="file-info-item">Columns: <strong>${columns.length}</strong></div>
+        <div class="file-info-item">Rows: <strong>${rows.length}</strong></div>
+        <div class="file-info-item">Version: <strong>TBL v${VERSION}</strong></div>
+      `;
 
-  input.accept = ".tbl";
-
-  input.onchange = async e => {
-
-    const file = e.target.files[0];
-
-    const text = await file.text();
-
-    const json = binaryToString(text);
-
-    const data = JSON.parse(json);
-
-    loadTable(data);
-
+      render();
+      toast(`Loaded "${file.name}" — ${rows.length} rows, ${columns.length} cols`, 'success');
+    } catch (err) {
+      toast('Error: ' + err.message, 'error');
+    }
   };
-
-  input.click();
-
+  reader.readAsArrayBuffer(file);
+  event.target.value = '';
 }
-</script>
 
-<div class="section">
-<h2>TBL.js Embed Snippet</h2>
+// ════════════════════════════════════════════════════════════════════════════
+//  SNIPPET MODAL
+// ════════════════════════════════════════════════════════════════════════════
+function showSnippetModal() {
+  document.getElementById('snippetScript').textContent =
+`<!-- Include the TBL library -->
+<script src="https://tbljs.netlify.app/tbl.js"><\/script>`;
 
-<div class="code">
-&lt;script src="https://tbljs.netlify.app/tbl.js"&gt;&lt;/script&gt;
+  document.getElementById('snippetUrl').textContent =
+`<!-- HTML: a div to render the table into -->
+<div id="my-table"></div>
 
-&lt;script&gt;
-const table = new TBL.Table({
-  columns: ["Name","Age","Country"],
+<script>
+  TBL.loadUrl('https://yoursite.com/data.tbl', document.getElementById('my-table'));
+<\/script>`;
+
+  document.getElementById('snippetFile').textContent =
+`<!-- HTML: file picker + display div -->
+<input type="file" accept=".tbl" id="tblFile" />
+<div id="my-table"></div>
+
+<script>
+  document.getElementById('tblFile').addEventListener('change', function () {
+    TBL.loadFile(this.files[0], document.getElementById('my-table'));
+  });
+<\/script>`;
+
+  document.getElementById('snippetParse').textContent =
+`// Parse binary ArrayBuffer → JavaScript object
+const buf = await fetch('data.tbl').then(r => r.arrayBuffer());
+const { columns, rows } = TBL.parse(buf);
+
+// columns: [{ name: 'id', type: 1 }, { name: 'label', type: 0 }, ...]
+// rows:    [[1, 'Alice'], [2, 'Bob'], ...]
+// Types:   0=STRING  1=INT32  2=FLOAT64  3=BOOL`;
+
+  document.getElementById('snippetEncode').textContent =
+`// Encode a table to binary .tbl ArrayBuffer
+const buf = TBL.encode({
+  columns: [
+    { name: 'id',    type: TBL.TYPE.INT32  },
+    { name: 'name',  type: TBL.TYPE.STRING },
+    { name: 'score', type: TBL.TYPE.FLOAT64 },
+    { name: 'active',type: TBL.TYPE.BOOL   }
+  ],
   rows: [
-    ["Tyler",13,"UK"],
-    ["Lana",12,"USA"]
+    [1, 'Alice', 98.5, true],
+    [2, 'Bob',   77.0, false]
   ]
 });
 
-table.download("people.tbl");
-&lt;/script&gt;
-</div>
-</div>
+// Download it:
+const blob = new Blob([buf], { type: 'application/octet-stream' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url; a.download = 'data.tbl'; a.click();`;
 
-<div class="section">
-<h2>Loading a .tbl File</h2>
-
-<div class="code">
-&lt;script src="https://tbljs.netlify.app/tbl.js"&gt;&lt;/script&gt;
-
-&lt;script&gt;
-async function load(){
-  const tbl = await TBL.fetch("people.tbl");
-
-  console.log(tbl.columns);
-  console.log(tbl.rows);
+  document.getElementById('snippetModal').classList.add('open');
 }
 
-load();
-&lt;/script&gt;
-</div>
-</div>
-
-<div class="section">
-<h2>Rendering TBL Files Into DIVs</h2>
-
-<div class="code">
-&lt;div id="users"&gt;&lt;/div&gt;
-
-&lt;script src="https://tbljs.netlify.app/tbl.js"&gt;&lt;/script&gt;
-
-&lt;script&gt;
-async function render(){
-
-  const tbl = await TBL.fetch("people.tbl");
-
-  const container = document.getElementById("users");
-
-  tbl.rows.forEach(row =&gt; {
-
-    const card = document.createElement("div");
-
-    card.className = "user-card";
-
-    card.innerHTML = `
-      &lt;h2&gt;${row[0]}&lt;/h2&gt;
-      &lt;p&gt;Age: ${row[1]}&lt;/p&gt;
-      &lt;p&gt;Country: ${row[2]}&lt;/p&gt;
-    `;
-
-    container.appendChild(card);
-
-  });
-
+function closeModal() {
+  document.getElementById('snippetModal').classList.remove('open');
 }
 
+document.getElementById('snippetModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════════════════════════════
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 2800);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ════════════════════════════════════════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveTbl(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); addRow(); }
+  if (e.key === 'Escape') { deselectAll(); closeModal(); }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════════════════
 render();
-&lt;/script&gt;
-</div>
-</div>
 
-<div class="section">
-<h2>tbl.js Library Code</h2>
-
-<div class="code">
-class TBLTable{
-
-  constructor(data){
-    this.columns = data.columns || [];
-    this.rows = data.rows || [];
-  }
-
-  toJSON(){
-    return {
-      columns:this.columns,
-      rows:this.rows
-    };
-  }
-
-  toBinary(){
-
-    const json = JSON.stringify(this.toJSON());
-
-    const encoder = new TextEncoder();
-
-    return encoder.encode(json);
-
-  }
-
-  download(filename="table.tbl"){
-
-    const blob = new Blob(
-      [this.toBinary()],
-      {type:"application/octet-stream"}
-    );
-
-    const a = document.createElement("a");
-
-    a.href = URL.createObjectURL(blob);
-
-    a.download = filename;
-
-    a.click();
-
-  }
-
-}
-
-window.TBL = {
-
-  Table:TBLTable,
-
-  parse(buffer){
-
-    const decoder = new TextDecoder();
-
-    const json = decoder.decode(buffer);
-
-    return JSON.parse(json);
-
-  },
-
-  async fetch(url){
-
-    const res = await fetch(url);
-
-    const buffer = await res.arrayBuffer();
-
-    const data = TBL.parse(buffer);
-
-    return data;
-
-  }
-
-};
-</div>
-</div>
-
-</div>
-
-<script>
-const table = document.getElementById("editorTable");
-const tbody = document.getElementById("tableBody");
-const output = document.getElementById("output");
-
-function addRow(){
-
-  const cols = document.querySelectorAll("#headerRow th").length;
-
-  const tr = document.createElement("tr");
-
-  for(let i=0;i<cols;i++){
-
-    const td = document.createElement("td");
-
-    td.innerHTML = `<input placeholder="Cell">`;
-
-    tr.appendChild(td);
-
-  }
-
-  tbody.appendChild(tr);
-
-}
-
-function addColumn(){
-
-  const headerRow = document.getElementById("headerRow");
-
-  const th = document.createElement("th");
-
-  th.innerHTML = `<input value="Column">`;
-
-  headerRow.appendChild(th);
-
-  document.querySelectorAll("#tableBody tr").forEach(row=>{
-
-    const td = document.createElement("td");
-
-    td.innerHTML = `<input placeholder="Cell">`;
-
-    row.appendChild(td);
-
-  });
-
-}
-
-function getTableData(){
-
-  const columns = [];
-
-  document.querySelectorAll("#headerRow input").forEach(input=>{
-
-    columns.push(input.value);
-
-  });
-
-  const rows = [];
-
-  document.querySelectorAll("#tableBody tr").forEach(tr=>{
-
-    const row = [];
-
-    tr.querySelectorAll("input").forEach(input=>{
-
-      row.push(input.value);
-
-    });
-
-    rows.push(row);
-
-  });
-
-  return {
-    columns,
-    rows
-  };
-
-}
-
-function previewJSON(){
-
-  output.value = JSON.stringify(getTableData(),null,2);
-
-}
-
-function exportTBL(){
-
-  const data = getTableData();
-
-  const json = JSON.stringify(data);
-
-  const encoder = new TextEncoder();
-
-  const binary = encoder.encode(json);
-
-  const blob = new Blob(
-    [binary],
-    {type:"application/octet-stream"}
-  );
-
-  const a = document.createElement("a");
-
-  a.href = URL.createObjectURL(blob);
-
-  a.download = "table.tbl";
-
-  a.click();
-
-}
-
-function importTBL(){
-
-  const input = document.createElement("input");
-
-  input.type = "file";
-
-  input.accept = ".tbl";
-
-  input.onchange = async e => {
-
-    const file = e.target.files[0];
-
-    const buffer = await file.arrayBuffer();
-
-    const decoder = new TextDecoder();
-
-    const json = decoder.decode(buffer);
-
-    const data = JSON.parse(json);
-
-    loadTable(data);
-
-  };
-
-  input.click();
-
-}
-
-function loadTable(data){
-
-  document.getElementById("headerRow").innerHTML = "";
-  tbody.innerHTML = "";
-
-  data.columns.forEach(col=>{
-
-    const th = document.createElement("th");
-
-    th.innerHTML = `<input value="${col}">`;
-
-    document.getElementById("headerRow").appendChild(th);
-
-  });
-
-  data.rows.forEach(row=>{
-
-    const tr = document.createElement("tr");
-
-    row.forEach(cell=>{
-
-      const td = document.createElement("td");
-
-      td.innerHTML = `<input value="${cell}">`;
-
-      tr.appendChild(td);
-
-    });
-
-    tbody.appendChild(tr);
-
-  });
-
+// Add sample data for demo
+function loadSample() {
+  columns = [
+    { name: 'id',       type: TYPE.INT32   },
+    { name: 'username', type: TYPE.STRING  },
+    { name: 'score',    type: TYPE.FLOAT64 },
+    { name: 'active',   type: TYPE.BOOL    },
+  ];
+  rows = [
+    [1, 'alice_k',  98.5, true],
+    [2, 'bob_m',    77.25, false],
+    [3, 'carol_99', 100.0, true],
+    [4, 'dave_x',   42.1, true],
+    [5, 'eve_2000', 55.75, false],
+  ];
+  render();
+  toast('Sample data loaded — try saving it as binary!', 'info');
 }
 </script>
 
