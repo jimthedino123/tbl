@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TBL Studio v2</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TBL Studio v3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-/* ════════════════════════════════ RESET & VARS ═══════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   RESET & VARS
+═══════════════════════════════════════════════════════ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:        #06080f;
@@ -24,63 +26,91 @@
   --green:     #10b981;
   --red:       #ef4444;
   --pink:      #ec4899;
+  --tblx:      #f59e0b;
+  --tblxL:     #fbbf24;
   --text:      #e2e8f0;
   --text2:     #94a3b8;
   --text3:     #475569;
   --glow:      0 0 24px rgba(59,130,246,.25);
   --glow2:     0 0 24px rgba(139,92,246,.25);
+  --glow3:     0 0 24px rgba(245,158,11,.35);
   --r:         6px;
+  --sb-left:   260px;
+  --sb-right:  300px;
+  --topbar-h:  52px;
+  --status-h:  32px;
 }
+
 body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow:hidden}
+
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
 
-/* ════════════════════════════════ NOISE OVERLAY ═════════════════════════ */
 body::before{
   content:'';position:fixed;inset:0;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
   pointer-events:none;z-index:0;opacity:.5
 }
 
-/* ════════════════════════════════ LAYOUT ════════════════════════════════ */
-.app{display:grid;grid-template-rows:52px 1fr;grid-template-columns:260px 1fr 300px;height:100vh;position:relative;z-index:1}
-.app.no-props{grid-template-columns:260px 1fr 0}
+/* ═══════════════════════════════════════════════════════
+   LAYOUT — DESKTOP
+═══════════════════════════════════════════════════════ */
+.app{
+  display:grid;
+  grid-template-rows:var(--topbar-h) 1fr var(--status-h);
+  grid-template-columns:var(--sb-left) 1fr var(--sb-right);
+  height:100vh;position:relative;z-index:1;
+}
+.app.no-props{grid-template-columns:var(--sb-left) 1fr 0}
+.app.no-left{grid-template-columns:0 1fr var(--sb-right)}
 
-/* ════════════════════════════════ TOPBAR ════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════════════════ */
 .topbar{
   grid-column:1/-1;
   display:flex;align-items:center;gap:0;
   border-bottom:1px solid var(--border);
-  background:rgba(6,8,15,.9);backdrop-filter:blur(16px);
-  padding:0 16px;
+  background:rgba(6,8,15,.95);backdrop-filter:blur(16px);
+  padding:0 12px;overflow-x:auto;
+  position:sticky;top:0;z-index:50;
 }
+.topbar::-webkit-scrollbar{height:0}
 .logo{
-  font-family:'Syne',sans-serif;font-weight:800;font-size:18px;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:17px;
   letter-spacing:.5px;color:var(--text);
-  display:flex;align-items:center;gap:8px;padding-right:20px;
-  border-right:1px solid var(--border);margin-right:16px;
+  display:flex;align-items:center;gap:8px;padding-right:16px;
+  border-right:1px solid var(--border);margin-right:12px;flex-shrink:0;
 }
 .logo em{color:var(--accent);font-style:normal}
 .logo-v{
   font-family:'JetBrains Mono',monospace;font-size:9px;
   background:var(--accent);color:#fff;padding:2px 5px;border-radius:3px;
-  font-weight:700;letter-spacing:1px;vertical-align:middle;
+  font-weight:700;letter-spacing:1px;
 }
-.topbar-actions{display:flex;gap:6px;margin-left:auto}
-.topbar-center{display:flex;gap:4px}
+.topbar-actions{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
+.topbar-center{display:flex;gap:3px;flex-wrap:nowrap}
 
-/* ════════════════════════════════ BUTTONS ════════════════════════════════ */
+/* Mobile hamburger */
+.mob-menu-btn{display:none;background:none;border:1px solid var(--border);color:var(--text2);font-size:16px;padding:5px 9px;border-radius:var(--r);cursor:pointer}
+
+/* ═══════════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════════ */
 .btn{
   font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.5px;
-  padding:6px 14px;border:1px solid var(--border2);border-radius:var(--r);
+  padding:6px 13px;border:1px solid var(--border2);border-radius:var(--r);
   cursor:pointer;transition:all .12s;background:transparent;color:var(--text2);
-  white-space:nowrap;
+  white-space:nowrap;flex-shrink:0;
 }
 .btn:hover{border-color:var(--accent);color:var(--accentL);background:rgba(59,130,246,.07)}
+.btn:active{transform:scale(.97)}
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
 .btn-primary:hover{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:var(--glow)}
+.btn-tblx{background:linear-gradient(135deg,#d97706,#f59e0b);color:#000;border-color:var(--tblx);font-weight:700}
+.btn-tblx:hover{background:linear-gradient(135deg,#b45309,#d97706);color:#000;box-shadow:var(--glow3)}
 .btn-ghost{border-color:transparent;color:var(--text3)}
 .btn-ghost:hover{border-color:var(--border2);color:var(--text2);background:var(--panel)}
 .btn-danger{border-color:rgba(239,68,68,.3);color:#f87171}
@@ -89,27 +119,57 @@ body::before{
 .btn-green:hover{background:rgba(16,185,129,.12);border-color:var(--green)}
 .btn-purple{border-color:rgba(139,92,246,.3);color:#a78bfa}
 .btn-purple:hover{background:rgba(139,92,246,.12);border-color:var(--accent2)}
+.btn-amber{border-color:rgba(245,158,11,.3);color:var(--tblxL)}
+.btn-amber:hover{background:rgba(245,158,11,.1);border-color:var(--tblx)}
 .btn-sm{padding:4px 10px;font-size:10px}
 .btn-xs{padding:2px 7px;font-size:10px}
 .btn-icon{padding:5px 8px;font-size:13px;line-height:1}
+.btn-full{width:100%}
 
-/* ════════════════════════════════ LEFT SIDEBAR ══════════════════════════ */
+/* Save dropdown group */
+.save-group{display:flex;gap:0;position:relative}
+.save-group .btn:first-child{border-radius:var(--r) 0 0 var(--r);border-right:none}
+.save-group .btn:last-child{border-radius:0 var(--r) var(--r) 0;padding:6px 8px}
+.save-dropdown{
+  position:absolute;top:calc(100% + 4px);right:0;
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);
+  min-width:200px;z-index:100;display:none;
+  box-shadow:0 12px 40px rgba(0,0,0,.6);overflow:hidden;
+}
+.save-dropdown.open{display:block}
+.save-opt{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;
+  font-size:11px;
+}
+.save-opt:last-child{border-bottom:none}
+.save-opt:hover{background:var(--panel)}
+.save-opt-label{flex:1}
+.save-opt-ext{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:.5px}
+.ext-v1{background:rgba(148,163,184,.12);color:var(--text3)}
+.ext-v2{background:rgba(59,130,246,.12);color:var(--accentL)}
+.ext-x{background:rgba(245,158,11,.18);color:var(--tblxL)}
+.save-opt-desc{font-size:9px;color:var(--text3);margin-top:1px}
+
+/* ═══════════════════════════════════════════════════════
+   LEFT SIDEBAR
+═══════════════════════════════════════════════════════ */
 .sidebar-left{
   border-right:1px solid var(--border);background:var(--bg2);
   display:flex;flex-direction:column;overflow:hidden;
+  transition:width .2s,transform .2s;
 }
-.sb-section{padding:14px 14px;border-bottom:1px solid var(--border)}
+.sb-section{padding:12px 12px;border-bottom:1px solid var(--border)}
 .sb-label{
   font-family:'Outfit',sans-serif;font-size:9px;letter-spacing:2.5px;
   text-transform:uppercase;color:var(--text3);
-  display:flex;align-items:center;gap:8px;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;margin-bottom:10px;
 }
 .sb-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-/* column list */
-.col-list{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;max-height:200px;overflow-y:auto}
+.col-list{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto;margin-bottom:8px}
 .col-item{
-  display:flex;align-items:center;gap:6px;padding:6px 8px;
+  display:flex;align-items:center;gap:6px;padding:5px 8px;
   border:1px solid var(--border);border-radius:4px;background:var(--panel);
   cursor:pointer;transition:all .1s;
 }
@@ -129,38 +189,41 @@ body::before{
 .tc-6{background:rgba(251,191,36,.15);color:#fde68a}
 .tc-7{background:rgba(167,139,250,.15);color:#c4b5fd}
 
-/* add column form */
-.add-col-form{display:flex;flex-direction:column;gap:7px}
+.add-col-form{display:flex;flex-direction:column;gap:6px}
 label.form-label{font-size:10px;color:var(--text3);margin-bottom:2px;display:block}
 input[type=text],input[type=url],input[type=date],input[type=number],input[type=color],select,textarea{
   width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);
   font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 9px;
   border-radius:var(--r);outline:none;transition:border-color .12s;
 }
-input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.12)}
 select option{background:var(--panel2)}
 textarea{resize:vertical;min-height:56px;line-height:1.5}
 input[type=color]{padding:2px 4px;height:32px;cursor:pointer}
 
-/* quick row buttons */
-.row-btns{display:flex;flex-direction:column;gap:5px}
+.row-btns{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.row-btns .btn-full{grid-column:1/-1}
 
-/* ════════════════════════════════ MAIN AREA ═════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   MAIN AREA
+═══════════════════════════════════════════════════════ */
 .main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 
 .toolbar{
-  display:flex;align-items:center;gap:6px;padding:8px 14px;
+  display:flex;align-items:center;gap:5px;padding:7px 12px;
   border-bottom:1px solid var(--border);background:var(--bg2);
-  flex-wrap:wrap;flex-shrink:0;
+  flex-wrap:wrap;flex-shrink:0;min-height:42px;
 }
-.toolbar-sep{width:1px;height:22px;background:var(--border);flex-shrink:0}
-.search-wrap{display:flex;align-items:center;gap:0;flex:1;max-width:220px}
-.search-wrap input{border-radius:var(--r) 0 0 var(--r);border-right:0}
-.search-wrap .btn{border-radius:0 var(--r) var(--r) 0;padding:6px 9px}
+.toolbar-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.search-wrap{display:flex;align-items:center;flex:1;max-width:200px;min-width:100px}
+.search-wrap input{border-radius:var(--r) 0 0 var(--r);border-right:0;font-size:11px}
+.search-wrap .btn{border-radius:0 var(--r) var(--r) 0;padding:5px 8px}
 
 .table-viewport{flex:1;overflow:auto;position:relative}
 
-/* ═══════════════════════════ EDITOR TABLE ═══════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   EDITOR TABLE
+═══════════════════════════════════════════════════════ */
 .tbl-editor{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
 .tbl-editor th{
   background:var(--panel);color:var(--accentL);padding:0;
@@ -175,7 +238,7 @@ input[type=color]{padding:2px 4px;height:32px;cursor:pointer}
 .th-actions{display:flex;gap:2px;padding-right:6px;opacity:0;transition:opacity .15s}
 .tbl-editor th:hover .th-actions{opacity:1}
 th.col-active{border-color:var(--accent)!important;background:rgba(59,130,246,.06)!important}
-th.row-num-th{background:rgba(0,0,0,.25);color:var(--text3);font-size:9px;width:42px;text-align:center;cursor:default}
+th.row-num-th{background:rgba(0,0,0,.25);color:var(--text3);font-size:9px;width:40px;text-align:center;cursor:default}
 
 .tbl-editor td{
   border:1px solid var(--border);background:var(--surface);
@@ -183,20 +246,18 @@ th.row-num-th{background:rgba(0,0,0,.25);color:var(--text3);font-size:9px;width:
 }
 .tbl-editor tr:hover td{background:var(--panel)}
 .tbl-editor tr.row-sel td{background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2)}
-td.row-num-td{background:rgba(0,0,0,.2)!important;color:var(--text3);font-size:9px;text-align:center;width:42px;padding:0 4px;pointer-events:none}
+td.row-num-td{background:rgba(0,0,0,.2)!important;color:var(--text3);font-size:9px;text-align:center;width:40px;padding:0 4px;pointer-events:none}
 td.cell-focused{outline:2px solid var(--accent);outline-offset:-2px;z-index:2;position:relative}
 
-/* ── Cell inputs ── */
 .cell-in{
   width:100%;background:transparent;border:none;outline:none;
   color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;
   padding:7px 10px;line-height:1.4;
 }
 .cell-in::placeholder{color:var(--text3)}
-.cell-img-wrap{padding:5px 8px;display:flex;align-items:center;gap:8px}
-.cell-img-thumb{width:48px;height:34px;object-fit:cover;border-radius:3px;border:1px solid var(--border);flex-shrink:0;background:var(--panel)}
+.cell-img-wrap{padding:4px 7px;display:flex;align-items:center;gap:7px}
+.cell-img-thumb{width:44px;height:32px;object-fit:cover;border-radius:3px;border:1px solid var(--border);flex-shrink:0;background:var(--panel)}
 .cell-img-thumb.err{display:none}
-.cell-img-url{flex:1;font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
 .cell-color-wrap{display:flex;align-items:center;gap:7px;padding:4px 8px}
 .color-swatch{width:22px;height:22px;border-radius:3px;border:1px solid rgba(255,255,255,.1);flex-shrink:0;cursor:pointer}
 .cell-bool{display:flex;align-items:center;justify-content:center;height:36px;cursor:pointer;font-size:18px;transition:transform .1s}
@@ -208,100 +269,207 @@ td.cell-focused{outline:2px solid var(--accent);outline-offset:-2px;z-index:2;po
 .cell-font-preview{font-size:13px;color:var(--text)}
 .cell-font-name{font-size:9px;color:var(--text3)}
 
-/* ════════════════════════════════ HEX STRIP ═════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   HEX STRIP
+═══════════════════════════════════════════════════════ */
 .hex-strip{
   border-top:1px solid var(--border);background:var(--bg2);
   font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);
-  padding:10px 14px;max-height:120px;overflow-y:auto;display:none;flex-shrink:0;
+  padding:8px 12px;max-height:110px;overflow-y:auto;display:none;flex-shrink:0;
 }
 .hex-strip.open{display:block}
-.hex-row{display:flex;gap:14px;line-height:1.9}
-.hex-addr{color:var(--accent);min-width:70px}
-.hex-bytes{color:var(--text);letter-spacing:1.5px;flex:1}
-.hex-asc{color:var(--accent2);min-width:130px}
+.hex-row{display:flex;gap:12px;line-height:1.9}
+.hex-addr{color:var(--accent);min-width:65px}
+.hex-bytes{color:var(--text);letter-spacing:1.5px;flex:1;word-break:break-all}
+.hex-asc{color:var(--accent2);min-width:110px}
 .hb-magic{color:var(--accent3);font-weight:700}
 .hb-ver{color:var(--accentL)}
 
-/* ════════════════════════════════ RIGHT PANEL ═══════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   TBLX CIPHER PREVIEW STRIP
+═══════════════════════════════════════════════════════ */
+.cipher-strip{
+  border-top:1px solid rgba(245,158,11,.2);background:rgba(245,158,11,.04);
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  padding:8px 12px;max-height:110px;overflow-y:auto;display:none;flex-shrink:0;
+}
+.cipher-strip.open{display:block}
+.cipher-preview{color:var(--tblxL);line-height:1.8;word-break:break-all}
+.cipher-label{font-size:9px;color:var(--text3);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase}
+
+/* ═══════════════════════════════════════════════════════
+   RIGHT PANEL
+═══════════════════════════════════════════════════════ */
 .sidebar-right{
   border-left:1px solid var(--border);background:var(--bg2);
   display:flex;flex-direction:column;overflow-y:auto;
   transition:width .15s;
 }
 .rp-header{
-  padding:12px 14px;border-bottom:1px solid var(--border);
+  padding:10px 12px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
 }
 .rp-title{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--accentL);letter-spacing:.5px}
-.rp-body{padding:14px;display:flex;flex-direction:column;gap:12px;flex:1}
+.rp-body{padding:12px;display:flex;flex-direction:column;gap:10px;flex:1}
 .rp-field{display:flex;flex-direction:column;gap:5px}
 .rp-field label{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
-.rp-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.rp-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0}
 .toggle-lbl{font-size:11px;color:var(--text2)}
-.toggle{position:relative;width:34px;height:18px;cursor:pointer}
+.toggle{position:relative;width:34px;height:18px;cursor:pointer;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0}
 .toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:9px;transition:.2s}
 .toggle input:checked~.toggle-track{background:var(--accent)}
 .toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:.2s}
 .toggle input:checked~.toggle-track~.toggle-thumb{left:18px}
-.divider{height:1px;background:var(--border);margin:4px 0}
+.divider{height:1px;background:var(--border);margin:2px 0}
 
-/* ════════════════════════════════ META MODAL ════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════════════ */
 .overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
-  z-index:100;display:none;align-items:center;justify-content:center;
+  position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);
+  z-index:200;display:none;align-items:center;justify-content:center;padding:16px;
 }
 .overlay.open{display:flex}
 .modal{
   background:var(--surface);border:1px solid var(--border2);border-radius:10px;
-  padding:24px;width:580px;max-width:95vw;max-height:88vh;overflow-y:auto;
+  padding:20px;width:600px;max-width:100%;max-height:90vh;overflow-y:auto;
   box-shadow:0 32px 80px rgba(0,0,0,.6),var(--glow);
 }
-.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--accentL);margin-bottom:18px;letter-spacing:.5px}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--accentL);margin-bottom:16px;letter-spacing:.5px}
 .modal pre{
   background:var(--panel);border:1px solid var(--border);border-radius:5px;
-  padding:13px;font-size:10.5px;overflow-x:auto;color:var(--text);line-height:1.8;
-  margin-bottom:10px;
+  padding:11px;font-size:10px;overflow-x:auto;color:var(--text);line-height:1.8;
+  margin-bottom:8px;
 }
-.modal p{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:10px}
-.modal h3{font-family:'Outfit',sans-serif;font-size:11px;color:var(--accent3);letter-spacing:1px;text-transform:uppercase;margin:14px 0 6px}
-.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.modal p{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:8px}
+.modal h3{font-family:'Outfit',sans-serif;font-size:10px;color:var(--accent3);letter-spacing:1px;text-transform:uppercase;margin:12px 0 5px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
 .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-/* ════════════════════════════════ STATUS BAR ════════════════════════════ */
-.statusbar{
-  grid-column:1/-1;display:flex;align-items:center;gap:18px;
-  padding:6px 16px;border-top:1px solid var(--border);
-  background:var(--bg2);font-size:10px;color:var(--text3);flex-shrink:0;
+/* TBLX info box */
+.tblx-box{
+  background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25);
+  border-radius:var(--r);padding:12px 14px;margin:10px 0;
 }
-.st-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
-.st-item{display:flex;align-items:center;gap:5px}
-.st-val{color:var(--text2)}
+.tblx-box h4{font-size:10px;color:var(--tblxL);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.tblx-box p{font-size:10.5px;color:var(--text2);line-height:1.7;margin:0}
+.cipher-table{width:100%;border-collapse:collapse;font-size:10px;margin-top:8px}
+.cipher-table td{padding:2px 8px;border:1px solid var(--border);text-align:center}
+.cipher-table td:nth-child(odd){color:var(--text3)}
+.cipher-table td:nth-child(even){color:var(--tblxL);font-weight:700}
 
-/* ════════════════════════════════ TOASTS ════════════════════════════════ */
-.toasts{position:fixed;top:16px;right:16px;z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+/* ═══════════════════════════════════════════════════════
+   STATUS BAR
+═══════════════════════════════════════════════════════ */
+.statusbar{
+  grid-column:1/-1;display:flex;align-items:center;gap:14px;
+  padding:0 14px;border-top:1px solid var(--border);
+  background:var(--bg2);font-size:10px;color:var(--text3);
+}
+.st-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 2.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.st-item{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.st-val{color:var(--text2)}
+.st-badge{
+  font-size:8px;padding:1px 5px;border-radius:2px;font-weight:700;letter-spacing:.5px;
+}
+.badge-v1{background:rgba(148,163,184,.12);color:var(--text3)}
+.badge-v2{background:rgba(59,130,246,.12);color:var(--accentL)}
+.badge-x{background:rgba(245,158,11,.18);color:var(--tblxL)}
+
+/* ═══════════════════════════════════════════════════════
+   TOASTS
+═══════════════════════════════════════════════════════ */
+.toasts{position:fixed;top:14px;right:14px;z-index:300;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 .toast{
-  padding:9px 16px;border-radius:var(--r);font-size:11px;border:1px solid;
+  padding:8px 14px;border-radius:var(--r);font-size:11px;border:1px solid;
   animation:tIn .18s ease;box-shadow:0 6px 24px rgba(0,0,0,.4);pointer-events:auto;
-  font-family:'JetBrains Mono',monospace;max-width:340px;
+  font-family:'JetBrains Mono',monospace;max-width:320px;
 }
 .t-ok{background:rgba(16,185,129,.12);border-color:var(--green);color:#34d399}
 .t-err{background:rgba(239,68,68,.12);border-color:var(--red);color:#f87171}
 .t-info{background:rgba(59,130,246,.1);border-color:var(--accent);color:var(--accentL)}
-@keyframes tIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+.t-tblx{background:rgba(245,158,11,.1);border-color:var(--tblx);color:var(--tblxL)}
+@keyframes tIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
 
-/* ════════════════════════════════ EMPTY STATE ═══════════════════════════ */
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:var(--text3)}
-.empty-ico{font-size:44px;opacity:.2}
-.empty-head{font-family:'Syne',sans-serif;font-size:14px;letter-spacing:2px;color:var(--border2)}
-.empty-sub{font-size:10px;text-align:center;max-width:280px;line-height:1.8}
+/* ═══════════════════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════════════════ */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text3)}
+.empty-ico{font-size:40px;opacity:.2}
+.empty-head{font-family:'Syne',sans-serif;font-size:13px;letter-spacing:2px;color:var(--border2)}
+.empty-sub{font-size:10px;text-align:center;max-width:260px;line-height:1.8}
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE DRAWER
+═══════════════════════════════════════════════════════ */
+.mob-drawer-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:150;
+}
+.mob-drawer-overlay.open{display:block}
+.mob-drawer{
+  position:fixed;left:0;top:0;bottom:0;width:280px;
+  background:var(--bg2);border-right:1px solid var(--border);
+  z-index:160;transform:translateX(-100%);transition:transform .25s;
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+.mob-drawer.open{transform:translateX(0)}
+.mob-drawer-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.mob-drawer-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accentL)}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — TABLET
+═══════════════════════════════════════════════════════ */
+@media (max-width:1024px){
+  :root{--sb-right:260px;--sb-left:220px}
+}
+
+@media (max-width:768px){
+  :root{--sb-left:0px;--sb-right:0px}
+  .app{grid-template-columns:1fr!important;grid-template-rows:var(--topbar-h) 1fr var(--status-h)}
+  .sidebar-left,.sidebar-right{display:none}
+  .mob-menu-btn{display:flex;align-items:center}
+  .topbar-center{display:none}
+  .logo{border-right:none;margin-right:0;padding-right:0}
+  .toolbar{gap:4px;padding:6px 8px}
+  .search-wrap{max-width:100%;flex:1}
+  .statusbar{gap:8px;padding:0 10px;overflow-x:auto}
+  .statusbar>*:not(:first-child):not(:nth-child(2)):not(:nth-child(3)){display:none}
+
+  /* Mobile-specific action sheet for save */
+  .save-group .save-dropdown{right:0;left:auto}
+}
+
+@media (max-width:480px){
+  .btn-sm{padding:4px 8px;font-size:10px}
+  .modal{padding:14px;border-radius:8px}
+  .modal-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 <div class="toasts" id="toasts"></div>
 
-<!-- ════════════════════════════ META MODAL ════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════
+     MOBILE DRAWER (left sidebar content)
+═══════════════════════════════════════════════════ -->
+<div class="mob-drawer-overlay" id="mobOverlay" onclick="closeMobDrawer()"></div>
+<div class="mob-drawer" id="mobDrawer">
+  <div class="mob-drawer-header">
+    <span class="mob-drawer-title">⊞ TBL Studio</span>
+    <button class="btn btn-xs btn-ghost" onclick="closeMobDrawer()">✕</button>
+  </div>
+  <div id="mobSidebarContent"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     META MODAL
+═══════════════════════════════════════════════════ -->
 <div class="overlay" id="metaOverlay">
 <div class="modal">
   <div class="modal-title">⚙ Table Settings</div>
@@ -312,13 +480,12 @@ td.cell-focused{outline:2px solid var(--accent);outline-offset:-2px;z-index:2;po
     <div class="rp-field"><label>Theme</label>
       <select id="m_theme">
         <option value="dark">Dark (default)</option>
-        <option value="light">Light</option>
         <option value="terminal">Terminal green</option>
         <option value="amber">Amber retro</option>
       </select>
     </div>
   </div>
-  <div style="margin-top:12px" class="rp-field"><label>Extra Google Fonts to preload (comma-separated)</label><input type="text" id="m_fonts" placeholder="Lora, Pacifico, Bebas Neue"></div>
+  <div style="margin-top:10px" class="rp-field"><label>Extra Google Fonts to preload (comma-separated)</label><input type="text" id="m_fonts" placeholder="Lora, Pacifico, Bebas Neue"></div>
   <div class="modal-footer">
     <button class="btn" onclick="closeOverlay('metaOverlay')">Cancel</button>
     <button class="btn btn-primary" onclick="saveMeta()">Save Settings</button>
@@ -326,131 +493,115 @@ td.cell-focused{outline:2px solid var(--accent);outline-offset:-2px;z-index:2;po
 </div>
 </div>
 
-<!-- ════════════════════════════ SNIPPET MODAL ══════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════
+     SNIPPET MODAL
+═══════════════════════════════════════════════════ -->
 <div class="overlay" id="snippetOverlay">
 <div class="modal">
   <div class="modal-title">&lt;/&gt; Embed &amp; API Reference</div>
   <h3>1 — Include library</h3>
   <pre>&lt;script src="https://tbljs.netlify.app/tbl.js"&gt;&lt;/script&gt;</pre>
-  <h3>2 — Render from URL into a DIV</h3>
+  <h3>2 — Render from URL</h3>
   <pre>&lt;div id="my-table"&gt;&lt;/div&gt;
-&lt;script&gt;
-  TBL.loadUrl('https://yoursite.com/data.tbl',
-              document.getElementById('my-table'));
-&lt;/script&gt;</pre>
-  <h3>3 — Render from &lt;input type="file"&gt;</h3>
-  <pre>&lt;input type="file" accept=".tbl" id="f"&gt;
-&lt;div id="out"&gt;&lt;/div&gt;
-&lt;script&gt;
-  document.getElementById('f').onchange = function(){
-    TBL.loadFile(this.files[0], document.getElementById('out'));
-  };
-&lt;/script&gt;</pre>
-  <h3>4 — Parse binary manually</h3>
+&lt;script&gt;TBL.loadUrl('data.tbl', document.getElementById('my-table'));&lt;/script&gt;</pre>
+  <h3>3 — Parse binary</h3>
   <pre>const buf = await fetch('data.tbl').then(r=&gt;r.arrayBuffer());
 const { columns, rows, meta } = TBL.parse(buf);
-// columns: [{name,type,props}, ...]
-// rows:    [[val,...], ...]
-// meta:    { title, description, fontFamily, ... }
-
-const objects = TBL.toObjects({ columns, rows });
-// [{col1: val1, col2: val2}, ...]</pre>
-  <h3>5 — Encode to binary</h3>
-  <pre>const buf = TBL.encode({
-  meta: { title: 'Products', fontFamily: 'Outfit' },
-  columns: [
-    { name: 'id',    type: TBL.TYPE.INT32     },
-    { name: 'name',  type: TBL.TYPE.STRING    },
-    { name: 'price', type: TBL.TYPE.FLOAT64   },
-    { name: 'photo', type: TBL.TYPE.IMAGE_URL },
-    { name: 'bg',    type: TBL.TYPE.COLOR     },
-    { name: 'font',  type: TBL.TYPE.FONT      },
-    { name: 'date',  type: TBL.TYPE.DATE      },
-    { name: 'live',  type: TBL.TYPE.BOOL      },
-  ],
-  rows: [
-    [1,'Laptop',999.99,'https://…/img.jpg','#1e40af','Syne','2024-03-01',true],
-  ]
-});</pre>
-  <h3>Column Types</h3>
-  <pre>TBL.TYPE.STRING    = 0   // UTF-8 text
-TBL.TYPE.INT32     = 1   // 32-bit integer (4 bytes)
-TBL.TYPE.FLOAT64   = 2   // 64-bit double  (8 bytes)
-TBL.TYPE.BOOL      = 3   // boolean        (1 byte)
-TBL.TYPE.IMAGE_URL = 4   // URL → rendered as &lt;img&gt;
-TBL.TYPE.COLOR     = 5   // CSS color → color swatch
-TBL.TYPE.DATE      = 6   // ISO date YYYY-MM-DD
-TBL.TYPE.FONT      = 7   // Google Font name → loads &amp; previews</pre>
+const objects = TBL.toObjects({ columns, rows });</pre>
+  <h3>4 — Decode .tblx (Base-8 cipher)</h3>
+  <pre>const encrypted = await fetch('data.tblx').then(r=&gt;r.text());
+const { columns, rows, meta } = TBL.parseX(encrypted);</pre>
   <div class="modal-footer"><button class="btn btn-primary" onclick="closeOverlay('snippetOverlay')">Close</button></div>
 </div>
 </div>
 
-<!-- ════════════════════════════ MAIN APP ════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════
+     TBLX INFO MODAL
+═══════════════════════════════════════════════════ -->
+<div class="overlay" id="tblxOverlay">
+<div class="modal">
+  <div class="modal-title">◈ .tblx — Base-8 Cipher Format</div>
+  <div class="tblx-box">
+    <h4>How it works</h4>
+    <p>The .tblx format encodes all data using a Base-8 (octal positional) letter substitution cipher. Each letter A–Z maps to its position in octal: A=0, B=1, … H=7, I=10, J=11, … Q=20, … Z=31. Numbers and punctuation pass through as-is. Spaces are preserved.</p>
+  </div>
+  <h3>Cipher Reference</h3>
+  <table class="cipher-table">
+    <tr><td>A</td><td>0</td><td>B</td><td>1</td><td>C</td><td>2</td><td>D</td><td>3</td><td>E</td><td>4</td><td>F</td><td>5</td><td>G</td><td>6</td><td>H</td><td>7</td></tr>
+    <tr><td>I</td><td>10</td><td>J</td><td>11</td><td>K</td><td>12</td><td>L</td><td>13</td><td>M</td><td>14</td><td>N</td><td>15</td><td>O</td><td>16</td><td>P</td><td>17</td></tr>
+    <tr><td>Q</td><td>20</td><td>R</td><td>21</td><td>S</td><td>22</td><td>T</td><td>23</td><td>U</td><td>24</td><td>V</td><td>25</td><td>W</td><td>26</td><td>X</td><td>27</td></tr>
+    <tr><td>Y</td><td>30</td><td>Z</td><td>31</td><td colspan="14" style="color:var(--text3)">Lowercase same as uppercase · Numbers/symbols unchanged</td></tr>
+  </table>
+  <h3>Example</h3>
+  <pre>Plaintext:  NO
+Ciphertext: 1516
+
+Plaintext:  Hello World
+Ciphertext: 74131316 2316213</pre>
+  <h3>File structure (.tblx)</h3>
+  <pre>Line 1: TBLX_V1                    ← magic header
+Line 2: &lt;base8-encoded JSON blob&gt;  ← all data encrypted</pre>
+  <div class="modal-footer"><button class="btn btn-primary" onclick="closeOverlay('tblxOverlay')">Close</button></div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════════════ -->
 <div class="app" id="app">
 
-<!-- ── TOPBAR ── -->
+<!-- TOPBAR -->
 <header class="topbar">
-  <div class="logo">TBL<em>Studio</em><span class="logo-v">v2</span></div>
+  <button class="mob-menu-btn" onclick="openMobDrawer()">☰</button>
+  <div class="logo">TBL<em>Studio</em><span class="logo-v">v3</span></div>
   <div class="topbar-center">
     <button class="btn btn-ghost btn-sm" onclick="newTable()">⬜ New</button>
     <button class="btn btn-ghost btn-sm" onclick="triggerOpen()">⬆ Open</button>
     <button class="btn btn-ghost btn-sm" onclick="showMeta()">⚙ Settings</button>
     <button class="btn btn-ghost btn-sm" onclick="loadSample()">✦ Sample</button>
     <button class="btn btn-ghost btn-sm" onclick="toggleHex()" id="hexBtn">◈ Hex</button>
+    <button class="btn btn-ghost btn-sm btn-amber" onclick="toggleCipher()" id="cipherBtn">⌬ Cipher</button>
     <button class="btn btn-ghost btn-sm" onclick="showSnippet()">⌘ Embed</button>
+    <button class="btn btn-ghost btn-sm btn-amber" onclick="openOverlay('tblxOverlay')">? .tblx</button>
   </div>
   <div class="topbar-actions">
-    <button class="btn btn-primary" onclick="saveTbl()">⬇ Save .tbl</button>
+    <!-- Save group with dropdown -->
+    <div class="save-group" id="saveGroup">
+      <button class="btn btn-primary" onclick="saveTbl('v2')">⬇ Save .tbl</button>
+      <button class="btn btn-primary" onclick="toggleSaveMenu(event)" id="saveCaret">▾</button>
+      <div class="save-dropdown" id="saveDropdown">
+        <div class="save-opt" onclick="saveTbl('v1');toggleSaveMenu()">
+          <span class="save-opt-label">
+            <div>Legacy TBL <span class="save-opt-ext ext-v1">.tbl v1</span></div>
+            <div class="save-opt-desc">Original format — basic JSON wrapper</div>
+          </span>
+        </div>
+        <div class="save-opt" onclick="saveTbl('v2');toggleSaveMenu()">
+          <span class="save-opt-label">
+            <div>TBL v2 Binary <span class="save-opt-ext ext-v2">.tbl v2</span></div>
+            <div class="save-opt-desc">Full binary — typed columns, props, meta</div>
+          </span>
+        </div>
+        <div class="save-opt" onclick="saveTblx();toggleSaveMenu()">
+          <span class="save-opt-label">
+            <div>Encrypted TBLX <span class="save-opt-ext ext-x">.tblx</span></div>
+            <div class="save-opt-desc">Base-8 cipher — all data obfuscated</div>
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 </header>
 
-<!-- ── LEFT SIDEBAR ── -->
-<aside class="sidebar-left">
-  <!-- Column list -->
-  <div class="sb-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
-    <div class="sb-label">Columns</div>
-    <div class="col-list" id="colList"></div>
-    <div class="add-col-form" style="margin-top:6px">
-      <input type="text" id="newColName" placeholder="column_name" maxlength="64">
-      <select id="newColType">
-        <option value="0">STRING — text</option>
-        <option value="1">INT32 — integer</option>
-        <option value="2">FLOAT64 — decimal</option>
-        <option value="3">BOOL — toggle</option>
-        <option value="4">IMAGE_URL — image</option>
-        <option value="5">COLOR — color swatch</option>
-        <option value="6">DATE — date picker</option>
-        <option value="7">FONT — Google Font</option>
-      </select>
-      <button class="btn btn-green btn-sm" onclick="addColumn()">+ Add Column</button>
-    </div>
-  </div>
-
-  <!-- Row controls -->
-  <div class="sb-section">
-    <div class="sb-label">Rows</div>
-    <div class="row-btns">
-      <button class="btn btn-sm" onclick="addRow()">+ Add Row</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteSelectedRows()">− Delete Selected</button>
-      <button class="btn btn-sm" onclick="duplicateSelectedRows()">⎘ Duplicate</button>
-      <button class="btn btn-sm btn-danger" onclick="clearRows()">✕ Clear All</button>
-    </div>
-  </div>
-
-  <!-- Sort/select -->
-  <div class="sb-section">
-    <div class="sb-label">Sort</div>
-    <div style="display:flex;gap:6px;align-items:center">
-      <select id="sortSel" style="flex:1"></select>
-      <button class="btn btn-sm btn-icon" onclick="sortAsc()" title="Sort ascending">↑</button>
-      <button class="btn btn-sm btn-icon" onclick="sortDesc()" title="Sort descending">↓</button>
-    </div>
+<!-- LEFT SIDEBAR -->
+<aside class="sidebar-left" id="sidebarLeft">
+  <div id="sidebarContent">
+    <!-- injected by renderSidebar() -->
   </div>
 </aside>
 
-<!-- ── MAIN EDITOR ── -->
+<!-- MAIN EDITOR -->
 <main class="main">
-  <!-- toolbar -->
   <div class="toolbar">
     <button class="btn btn-sm" onclick="selectAll()">☑ All</button>
     <button class="btn btn-sm" onclick="deselectAll()">☐ None</button>
@@ -462,99 +613,128 @@ TBL.TYPE.FONT      = 7   // Google Font name → loads &amp; previews</pre>
     <div style="flex:1"></div>
     <span id="selInfo" style="font-size:10px;color:var(--text3)"></span>
   </div>
-
-  <!-- table viewport -->
   <div class="table-viewport" id="tableVp">
     <div class="empty" id="emptyState">
       <div class="empty-ico">⊞</div>
       <div class="empty-head">EMPTY TABLE</div>
-      <div class="empty-sub">Add columns in the sidebar, then fill in your data. Save as a true binary .tbl file.</div>
+      <div class="empty-sub">Add columns in the sidebar, then fill in your data. Save as .tbl (v1/v2) or encrypted .tblx</div>
     </div>
     <table class="tbl-editor" id="editorTable" style="display:none">
       <thead id="edThead"></thead>
       <tbody id="edTbody"></tbody>
     </table>
   </div>
-
-  <!-- hex strip -->
   <div class="hex-strip" id="hexStrip"></div>
+  <div class="cipher-strip" id="cipherStrip">
+    <div class="cipher-label">⌬ Base-8 cipher preview (first 512 chars)</div>
+    <div class="cipher-preview" id="cipherPreview"></div>
+  </div>
 </main>
 
-<!-- ── RIGHT PANEL (Column Properties) ── -->
+<!-- RIGHT PANEL -->
 <aside class="sidebar-right" id="rightPanel">
   <div class="rp-header">
     <span class="rp-title" id="rpTitle">Column Properties</span>
     <button class="btn btn-ghost btn-xs" onclick="closeProps()">✕</button>
   </div>
   <div class="rp-body" id="rpBody">
-    <p style="font-size:11px;color:var(--text3)">Click a column header to edit its properties.</p>
+    <p style="font-size:11px;color:var(--text3)">Click a column header to inspect and edit its properties.</p>
   </div>
 </aside>
 
 </div><!-- end .app -->
 
-<!-- status bar -->
+<!--<!-- STATUS BAR -->
 <div class="statusbar">
   <div class="st-item"><span class="st-dot"></span><span id="stText">Ready</span></div>
   <div class="st-item">Rows <span class="st-val" id="stRows">0</span></div>
   <div class="st-item">Cols <span class="st-val" id="stCols">0</span></div>
   <div class="st-item">Size <span class="st-val" id="stSize">—</span></div>
+  <div class="st-item" id="stFormatItem" style="display:none">Format <span id="stFormat" class="st-badge badge-v2">v2</span></div>
   <div class="st-item">File <span class="st-val" id="stFile">untitled</span></div>
   <div style="flex:1"></div>
-  <span style="color:var(--border2)">tbljs.netlify.app/tbl.js · TBL v2 · Big-endian</span>
+  <span style="color:var(--border2);white-space:nowrap">TBL Studio v3</span>
 </div>
 
-<input type="file" id="fileIn" accept=".tbl" style="display:none" onchange="openFile(event)">
+<input type="file" id="fileIn" accept=".tbl,.tblx" style="display:none" onchange="openFile(event)">
 
-<!-- ════════════════════════════════════════════════════════════════════════
-  TBL v2 FULL BINARY FORMAT
-  Magic: 54 42 4C + version(1B) + metaLen(4B) + meta(JSON) +
-  colCount(2B) + rowCount(4B) +
-  [type(1B) + nameLen(1B) + name + propLen(2B) + props(JSON)] * N +
-  row data packed per type:
-    STRING/IMAGE_URL/COLOR/DATE/FONT → uint32 len + UTF-8 bytes
-    INT32   → int32 BE
-    FLOAT64 → float64 BE
-    BOOL    → uint8
-════════════════════════════════════════════════════════════════════════ -->
 <script>
-// ─── COLUMN TYPES ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  BASE-8 CIPHER  (A=0…H=7, I=10…P=17, Q=20…Z=31)
+// ══════════════════════════════════════════════════════
+const OCTAL_MAP = {};
+const OCTAL_REV = {};
+(function(){
+  for(let i=0;i<26;i++){
+    const ch = String.fromCharCode(65+i);
+    const val = i.toString(8); // octal of position
+    OCTAL_MAP[ch] = val;
+    OCTAL_MAP[ch.toLowerCase()] = val;
+    if(!OCTAL_REV[val]) OCTAL_REV[val] = ch;
+  }
+})();
+
+function encryptBase8(str){
+  let out='';
+  for(let i=0;i<str.length;i++){
+    const c=str[i];
+    if(OCTAL_MAP[c]) out+=OCTAL_MAP[c];
+    else out+=c;
+  }
+  return out;
+}
+
+function decryptBase8(str){
+  // greedily match 2-digit octal codes (10-37) then 1-digit (0-7)
+  let out='',i=0;
+  while(i<str.length){
+    const c=str[i];
+    if(c>='0'&&c<='7'){
+      // try 2-digit first
+      const two=str.slice(i,i+2);
+      if(two.length===2&&OCTAL_REV[two]){
+        out+=OCTAL_REV[two];i+=2;
+      } else {
+        const one=str[i];
+        if(OCTAL_REV[one]){out+=OCTAL_REV[one];i++;}
+        else{out+=c;i++;}
+      }
+    } else {
+      out+=c;i++;
+    }
+  }
+  return out;
+}
+
+// ══════════════════════════════════════════════════════
+//  TBL v1 (legacy) — JSON wrapper with "TBL1" header
+// ══════════════════════════════════════════════════════
+function encodeLegacyV1(cols,rowData,metaObj){
+  const obj={version:1,meta:metaObj,columns:cols.map(c=>c.name),rows:rowData};
+  const json=JSON.stringify(obj);
+  const enc=new TextEncoder();
+  const header=enc.encode('TBL1');
+  const body=enc.encode(json);
+  const buf=new Uint8Array(header.length+body.length);
+  buf.set(header,0);buf.set(body,header.length);
+  return buf.buffer;
+}
+
+// ══════════════════════════════════════════════════════
+//  TBL v2 — true binary (original format)
+// ══════════════════════════════════════════════════════
 const TYPE      = { STRING:0, INT32:1, FLOAT64:2, BOOL:3, IMAGE_URL:4, COLOR:5, DATE:6, FONT:7 };
 const TYPE_NAME = ['STRING','INT32','FLOAT64','BOOL','IMAGE_URL','COLOR','DATE','FONT'];
 const STR_TYPES = new Set([0,4,5,6,7]);
 const MAGIC = [0x54,0x42,0x4C];
 const VERSION = 2;
 
-// ─── STATE ───────────────────────────────────────────────────────────────────
-let columns  = [];  // [{name, type, props:{width,align,hidden,...}}]
-let rows     = [];  // [[v,...],...]
-let meta     = {};  // {title, description, fontFamily, customFonts, theme}
-let selected = new Set();
-let filter   = '';
-let activeCol = -1;
-let hexOpen  = false;
-let currentFile = 'untitled';
-
-const _loadedFonts = new Set();
-
-// ─── FONT LOADER ─────────────────────────────────────────────────────────────
-function loadFont(name){
-  if(!name||_loadedFonts.has(name))return;
-  _loadedFonts.add(name);
-  const l=document.createElement('link');
-  l.rel='stylesheet';
-  l.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}&display=swap`;
-  document.head.appendChild(l);
-}
-
-// ─── BINARY ENCODER ──────────────────────────────────────────────────────────
 function encode(){
   const enc=new TextEncoder();
   const colNameB=columns.map(c=>enc.encode(c.name));
   const colPropB=columns.map(c=>enc.encode(JSON.stringify(c.props||{})));
   const metaB=enc.encode(JSON.stringify(meta||{}));
 
-  // flush DOM inputs into rows first
   document.querySelectorAll('.cell-in[data-ri][data-ci]').forEach(el=>{
     const ri=+el.dataset.ri, ci=+el.dataset.ci;
     if(rows[ri]!==undefined){
@@ -606,7 +786,6 @@ function encode(){
   return buf;
 }
 
-// ─── BINARY DECODER ──────────────────────────────────────────────────────────
 function decode(ab){
   const dv=new DataView(ab);const b=new Uint8Array(ab);const dec=new TextDecoder();let o=0;
   if(b[0]!==MAGIC[0]||b[1]!==MAGIC[1]||b[2]!==MAGIC[2]) throw new Error('Not a TBL file — invalid magic bytes');
@@ -640,7 +819,79 @@ function decode(ab){
   return{columns:cols,rows:rowData,meta:mt};
 }
 
-// ─── RENDER ──────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  TBLX — Base-8 cipher format
+// ══════════════════════════════════════════════════════
+function encodeTblx(){
+  // First build a canonical JSON representation
+  const payload=JSON.stringify({
+    version:'tblx1',
+    meta,
+    columns:columns.map(c=>({name:c.name,type:c.type,props:c.props})),
+    rows
+  });
+  const encrypted=encryptBase8(payload);
+  return `TBLX_V1\n${encrypted}`;
+}
+
+function decodeTblx(text){
+  const lines=text.trim().split('\n');
+  if(lines[0].trim()!=='TBLX_V1') throw new Error('Not a valid .tblx file (bad header)');
+  const encrypted=lines.slice(1).join('\n');
+  const plain=decryptBase8(encrypted);
+  const obj=JSON.parse(plain);
+  // Normalize columns to have type info
+  const cols=(obj.columns||[]).map(c=>{
+    if(typeof c==='string') return{name:c,type:TYPE.STRING,props:{}};
+    return{name:c.name,type:c.type??TYPE.STRING,props:c.props||{}};
+  });
+  return{columns:cols,rows:obj.rows||[],meta:obj.meta||{}};
+}
+
+// ══════════════════════════════════════════════════════
+//  LEGACY v1 DECODER (TBL1 + JSON)
+// ══════════════════════════════════════════════════════
+function decodeLegacyV1(ab){
+  const b=new Uint8Array(ab);
+  const dec=new TextDecoder();
+  const header=dec.decode(b.slice(0,4));
+  if(header!=='TBL1') throw new Error('Not a v1 TBL file');
+  const json=dec.decode(b.slice(4));
+  const obj=JSON.parse(json);
+  const cols=(obj.columns||[]).map(c=>
+    typeof c==='string'?{name:c,type:TYPE.STRING,props:{}}:c
+  );
+  return{columns:cols,rows:obj.rows||[],meta:obj.meta||{}};
+}
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let columns  = [];
+let rows     = [];
+let meta     = {};
+let selected = new Set();
+let filter   = '';
+let activeCol = -1;
+let hexOpen  = false;
+let cipherOpen = false;
+let currentFile = 'untitled';
+let currentFormat = 'v2'; // 'v1','v2','tblx'
+
+const _loadedFonts = new Set();
+
+function loadFont(name){
+  if(!name||_loadedFonts.has(name))return;
+  _loadedFonts.add(name);
+  const l=document.createElement('link');
+  l.rel='stylesheet';
+  l.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}&display=swap`;
+  document.head.appendChild(l);
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════
 function render(){
   const thead=document.getElementById('edThead');
   const tbody=document.getElementById('edTbody');
@@ -650,11 +901,11 @@ function render(){
   if(columns.length===0){empty.style.display='flex';table.style.display='none';}
   else{empty.style.display='none';table.style.display='';}
 
-  // thead
   let h='<tr><th class="row-num-th">#</th>';
   columns.forEach((col,ci)=>{
+    if(col.props?.hidden)return;
     const active=ci===activeCol;
-    h+=`<th class="${active?'col-active':''}" data-ci="${ci}">
+    h+=`<th class="${active?'col-active':''}" data-ci="${ci}" style="${col.props?.width?`width:${col.props.width}px;min-width:${col.props.width}px`:''}">
       <div class="th-inner" onclick="openProps(${ci})">
         <span class="th-name">${esc(col.name)}</span>
         <span class="type-chip tc-${col.type}">${TYPE_NAME[col.type].slice(0,3)}</span>
@@ -669,7 +920,6 @@ function render(){
   h+='</tr>';
   thead.innerHTML=h;
 
-  // tbody
   const term=filter.toLowerCase();
   let vis=0;
   tbody.innerHTML='';
@@ -679,16 +929,20 @@ function render(){
     const tr=document.createElement('tr');
     if(selected.has(ri))tr.classList.add('row-sel');
     tr.dataset.ri=ri;
-    tr.addEventListener('click',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;toggleSel(ri);});
+    tr.addEventListener('click',e=>{
+      if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON'||e.target.tagName==='SELECT')return;
+      toggleSel(ri);
+    });
 
     let html=`<td class="row-num-td">${ri+1}</td>`;
     columns.forEach((col,ci)=>{
-      html+=`<td data-ci="${ci}">${makeCellHTML(row[ci],ri,ci,col)}</td>`;
+      if(col.props?.hidden)return;
+      const align=col.props?.align||'left';
+      html+=`<td data-ci="${ci}" style="text-align:${align}">${makeCellHTML(row[ci],ri,ci,col)}</td>`;
     });
     tr.innerHTML=html;
     tbody.appendChild(tr);
 
-    // Post-process font cells
     columns.forEach((col,ci)=>{
       if(col.type===TYPE.FONT&&row[ci]){
         loadFont(row[ci]);
@@ -699,10 +953,11 @@ function render(){
   });
 
   updateStatus(vis);
-  renderColList();
-  renderSortSel();
+  renderSidebar();
   if(hexOpen)renderHex();
+  if(cipherOpen)renderCipherPreview();
   applyMeta();
+  syncMobSidebar();
 }
 
 function makeCellHTML(val,ri,ci,col){
@@ -717,7 +972,7 @@ function makeCellHTML(val,ri,ci,col){
     const url=String(v);
     return`<div class="cell-img-wrap">
       ${url?`<img class="cell-img-thumb" src="${esc(url)}" onerror="this.classList.add('err')">`:
-        `<div style="width:48px;height:34px;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:9px">IMG</div>`}
+        `<div style="width:44px;height:32px;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:9px">IMG</div>`}
       <input class="cell-in" data-ri="${ri}" data-ci="${ci}" placeholder="https://…" value="${esc(url)}"
         oninput="onCellInput(this,${ri},${ci})" onfocus="focusCell(this)"
         style="font-size:10px;color:var(--pink)">
@@ -728,7 +983,7 @@ function makeCellHTML(val,ri,ci,col){
     return`<div class="cell-color-wrap">
       <input type="color" class="color-swatch" value="${isValidColor(cv)?cv:'#3b82f6'}"
         oninput="onColorChange(this,${ri},${ci})">
-      <input class="cell-in" data-ri="${ri}" data-ci="${ci}" placeholder="#rrggbb or css"
+      <input class="cell-in" data-ri="${ri}" data-ci="${ci}" placeholder="#rrggbb"
         value="${esc(String(v))}"
         oninput="onCellInput(this,${ri},${ci});syncColorSwatch(this)"
         onfocus="focusCell(this)" style="font-size:11px">
@@ -747,7 +1002,6 @@ function makeCellHTML(val,ri,ci,col){
         style="font-size:10px;color:var(--accent2);padding:2px 0 0">
     </div>`;
   }
-  // STRING / INT32 / FLOAT64
   const isNum=t===TYPE.INT32||t===TYPE.FLOAT64;
   return`<input class="cell-in" data-ri="${ri}" data-ci="${ci}"
     placeholder="${t===TYPE.INT32?'0':t===TYPE.FLOAT64?'0.0':''}"
@@ -760,24 +1014,23 @@ function focusCell(el){
   document.querySelectorAll('.cell-focused').forEach(e=>e.classList.remove('cell-focused'));
   el.closest('td')?.classList.add('cell-focused');
 }
-
 function onCellInput(el,ri,ci){
   rows[ri][ci]=el.value;
   if(hexOpen)renderHex();
+  if(cipherOpen)renderCipherPreview();
   updateStatus();
 }
 function onFontInput(el,ri,ci){
-  rows[ri][ci]=el.value;
-  loadFont(el.value);
+  rows[ri][ci]=el.value;loadFont(el.value);
   const prev=el.closest('.cell-font-wrap')?.querySelector('.cell-font-preview');
   if(prev){prev.textContent=el.value||'—';prev.style.fontFamily=el.value?`'${el.value}',sans-serif`:'';}
-  if(hexOpen)renderHex();
+  if(hexOpen)renderHex();if(cipherOpen)renderCipherPreview();
 }
 function onColorChange(picker,ri,ci){
   rows[ri][ci]=picker.value;
   const txt=picker.nextElementSibling;
   if(txt)txt.value=picker.value;
-  if(hexOpen)renderHex();
+  if(hexOpen)renderHex();if(cipherOpen)renderCipherPreview();
 }
 function syncColorSwatch(txtInput){
   const sw=txtInput.previousElementSibling;
@@ -786,47 +1039,110 @@ function syncColorSwatch(txtInput){
 function isValidColor(c){try{const s=new Option().style;s.color=c;return s.color!=='';}catch{return false;}}
 function toggleBool(ri,ci){rows[ri][ci]=!rows[ri][ci];render();}
 
-// ─── COL LIST SIDEBAR ─────────────────────────────────────────────────────────
-function renderColList(){
-  const el=document.getElementById('colList');
-  if(columns.length===0){el.innerHTML='<div style="font-size:10px;color:var(--text3);text-align:center;padding:8px">No columns</div>';return;}
-  el.innerHTML=columns.map((col,ci)=>`
+// ══════════════════════════════════════════════════════
+//  SIDEBAR
+// ══════════════════════════════════════════════════════
+function buildSidebarHTML(){
+  const noColMsg='<div style="font-size:10px;color:var(--text3);text-align:center;padding:8px">No columns</div>';
+  const colItems=columns.length===0?noColMsg:columns.map((col,ci)=>`
     <div class="col-item ${ci===activeCol?'active':''}" onclick="openProps(${ci})">
       <span class="col-name-text">${esc(col.name)}</span>
       <span class="type-chip tc-${col.type}">${TYPE_NAME[col.type].slice(0,3)}</span>
     </div>`).join('');
+
+  const sortOpts=columns.map((c,i)=>`<option value="${i}">${c.name}</option>`).join('');
+
+  return`
+  <div class="sb-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="sb-label">Columns</div>
+    <div class="col-list" id="colList">${colItems}</div>
+    <div class="add-col-form" style="margin-top:6px">
+      <input type="text" id="newColName" placeholder="column_name" maxlength="64">
+      <select id="newColType">
+        <option value="0">STRING — text</option>
+        <option value="1">INT32 — integer</option>
+        <option value="2">FLOAT64 — decimal</option>
+        <option value="3">BOOL — toggle</option>
+        <option value="4">IMAGE_URL — image</option>
+        <option value="5">COLOR — color swatch</option>
+        <option value="6">DATE — date picker</option>
+        <option value="7">FONT — Google Font</option>
+      </select>
+      <button class="btn btn-green btn-sm" onclick="addColumn()">+ Add Column</button>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Rows</div>
+    <div class="row-btns">
+      <button class="btn btn-sm" onclick="addRow()">+ Add Row</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteSelectedRows()">− Delete</button>
+      <button class="btn btn-sm" onclick="duplicateSelectedRows()">⎘ Duplicate</button>
+      <button class="btn btn-sm btn-danger btn-full" onclick="clearRows()">✕ Clear All</button>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Sort</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select id="sortSel" style="flex:1">${sortOpts}</select>
+      <button class="btn btn-sm btn-icon" onclick="sortAsc()" title="Ascending">↑</button>
+      <button class="btn btn-sm btn-icon" onclick="sortDesc()" title="Descending">↓</button>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Format Info</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:10px;color:var(--text3);line-height:1.7">
+        <div>Current: <span style="color:var(--text2)">${currentFormat==='tblx'?'.tblx (Base-8)':`.tbl (${currentFormat})`}</span></div>
+        <div>Rows: <span style="color:var(--text2)" id="sbRowCount">${rows.length}</span></div>
+        <div>Cols: <span style="color:var(--text2)">${columns.length}</span></div>
+      </div>
+    </div>
+  </div>`;
 }
 
-function renderSortSel(){
-  const sel=document.getElementById('sortSel');
-  sel.innerHTML=columns.map((c,i)=>`<option value="${i}">${c.name}</option>`).join('');
+function renderSidebar(){
+  const el=document.getElementById('sidebarContent');
+  if(el) el.innerHTML=buildSidebarHTML();
 }
 
-// ─── STATUS ───────────────────────────────────────────────────────────────────
+function syncMobSidebar(){
+  const el=document.getElementById('mobSidebarContent');
+  if(el) el.innerHTML=buildSidebarHTML();
+}
+
+// ══════════════════════════════════════════════════════
+//  STATUS / UTILS
+// ══════════════════════════════════════════════════════
 function updateStatus(vis){
   const vr=vis!=null?vis:rows.length;
   document.getElementById('stRows').textContent=filter?`${vr}/${rows.length}`:rows.length;
   document.getElementById('stCols').textContent=columns.length;
   const buf=columns.length?encode():null;
   document.getElementById('stSize').textContent=buf?fmtBytes(buf.byteLength):'—';
+  const fi=document.getElementById('stFormatItem');
+  if(fi){fi.style.display='';document.getElementById('stFormat').textContent=currentFormat==='tblx'?'.tblx':'TBL '+currentFormat;}
+  const fc=document.getElementById('stFormat');
+  if(fc){fc.className='st-badge '+(currentFormat==='v1'?'badge-v1':currentFormat==='v2'?'badge-v2':'badge-x');}
 }
 function fmtBytes(n){if(n<1024)return n+' B';if(n<1048576)return(n/1024).toFixed(1)+' KB';return(n/1048576).toFixed(2)+' MB';}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-// ─── META ─────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  META
+// ══════════════════════════════════════════════════════
 function applyMeta(){
-  if(meta.fontFamily){
-    loadFont(meta.fontFamily);
-    document.getElementById('editorTable').style.fontFamily=`'${meta.fontFamily}',monospace`;
-  }
+  if(meta.fontFamily){loadFont(meta.fontFamily);document.getElementById('editorTable').style.fontFamily=`'${meta.fontFamily}',monospace`;}
   if(meta.customFonts) meta.customFonts.forEach(loadFont);
   document.getElementById('stFile').textContent=meta.title||currentFile;
 }
 
-// ─── COLUMN ACTIONS ──────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  COLUMN ACTIONS
+// ══════════════════════════════════════════════════════
 function addColumn(){
-  const nameIn=document.getElementById('newColName');
-  const typeIn=document.getElementById('newColType');
+  const nameIn=document.getElementById('newColName')||document.querySelector('#mobSidebarContent #newColName');
+  const typeIn=document.getElementById('newColType')||document.querySelector('#mobSidebarContent #newColType');
+  if(!nameIn||!typeIn)return;
   const name=nameIn.value.trim().replace(/\s+/g,'_');
   if(!name){toast('Column name required','err');return;}
   if(columns.find(c=>c.name===name)){toast('Column name must be unique','err');return;}
@@ -841,44 +1157,41 @@ function addColumn(){
 
 function removeCol(ci){
   const n=columns[ci].name;
-  columns.splice(ci,1);
-  rows.forEach(r=>r.splice(ci,1));
+  columns.splice(ci,1);rows.forEach(r=>r.splice(ci,1));
   if(activeCol===ci)activeCol=-1;
   else if(activeCol>ci)activeCol--;
-  render();
-  renderProps();
+  render();renderProps();
   toast(`"${n}" removed`,'info');
 }
 
-// ─── ROW ACTIONS ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  ROW ACTIONS
+// ══════════════════════════════════════════════════════
 function addRow(){
   if(columns.length===0){toast('Add a column first','err');return;}
   rows.push(columns.map(col=>col.type===TYPE.BOOL?false:STR_TYPES.has(col.type)?'':0));
   render();
   document.getElementById('tableVp').scrollTop=9999;
 }
-
 function deleteSelectedRows(){
   if(selected.size===0){toast('Select rows first','err');return;}
   rows=rows.filter((_,i)=>!selected.has(i));
-  selected.clear();
-  render();
-  toast('Rows deleted','info');
+  selected.clear();render();toast('Rows deleted','info');
 }
-
 function duplicateSelectedRows(){
   if(selected.size===0){toast('Select rows first','err');return;}
   const add=[...selected].sort().map(i=>[...rows[i]]);
   rows.push(...add);selected.clear();render();toast(`Duplicated ${add.length} row(s)`,'ok');
 }
-
 function clearRows(){
   if(!rows.length)return;
   if(!confirm(`Clear all ${rows.length} rows?`))return;
   rows=[];selected.clear();render();toast('All rows cleared','info');
 }
 
-// ─── SELECTION ────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  SELECTION
+// ══════════════════════════════════════════════════════
 function toggleSel(ri){
   selected.has(ri)?selected.delete(ri):selected.add(ri);
   const tr=document.querySelector(`tr[data-ri="${ri}"]`);
@@ -888,7 +1201,9 @@ function toggleSel(ri){
 function selectAll(){rows.forEach((_,i)=>selected.add(i));render();}
 function deselectAll(){selected.clear();document.getElementById('selInfo').textContent='';render();}
 
-// ─── SORT ─────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  SORT / FILTER
+// ══════════════════════════════════════════════════════
 function sortByCI(ci,dir){
   rows.sort((a,b)=>{
     const va=a[ci],vb=b[ci];
@@ -898,14 +1213,20 @@ function sortByCI(ci,dir){
   });
   render();toast(`Sorted by "${columns[ci].name}"`,'info');
 }
-function sortAsc(){const ci=+document.getElementById('sortSel').value;if(!isNaN(ci))sortByCI(ci,1);}
-function sortDesc(){const ci=+document.getElementById('sortSel').value;if(!isNaN(ci))sortByCI(ci,-1);}
-
-// ─── FILTER ───────────────────────────────────────────────────────────────────
+function sortAsc(){
+  const sel=document.getElementById('sortSel')||document.querySelector('#mobSidebarContent #sortSel');
+  const ci=sel?+sel.value:0;if(!isNaN(ci))sortByCI(ci,1);
+}
+function sortDesc(){
+  const sel=document.getElementById('sortSel')||document.querySelector('#mobSidebarContent #sortSel');
+  const ci=sel?+sel.value:0;if(!isNaN(ci))sortByCI(ci,-1);
+}
 function filterRows(){filter=document.getElementById('searchIn').value;render();}
 function clearSearch(){document.getElementById('searchIn').value='';filter='';render();}
 
-// ─── HEX VIEWER ───────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  HEX VIEWER
+// ══════════════════════════════════════════════════════
 function toggleHex(){
   hexOpen=!hexOpen;
   document.getElementById('hexStrip').classList.toggle('open',hexOpen);
@@ -933,16 +1254,30 @@ function renderHex(){
   document.getElementById('hexStrip').innerHTML=html;
 }
 
-// ─── RIGHT PANEL — COLUMN PROPERTIES ─────────────────────────────────────────
-function openProps(ci){
-  activeCol=ci;
-  render();
-  renderProps();
+// ══════════════════════════════════════════════════════
+//  CIPHER PREVIEW
+// ══════════════════════════════════════════════════════
+function toggleCipher(){
+  cipherOpen=!cipherOpen;
+  document.getElementById('cipherStrip').classList.toggle('open',cipherOpen);
+  document.getElementById('cipherBtn').style.color=cipherOpen?'var(--tblxL)':'';
+  if(cipherOpen)renderCipherPreview();
 }
+function renderCipherPreview(){
+  if(columns.length===0){document.getElementById('cipherPreview').textContent='No data.';return;}
+  const full=encodeTblx();
+  const lines=full.split('\n');
+  const preview=lines.slice(1).join('').slice(0,512);
+  document.getElementById('cipherPreview').textContent=preview+(lines[1]?.length>512?'…':'');
+}
+
+// ══════════════════════════════════════════════════════
+//  RIGHT PANEL — COLUMN PROPERTIES
+// ══════════════════════════════════════════════════════
+function openProps(ci){activeCol=ci;render();renderProps();}
 function closeProps(){
-  activeCol=-1;
-  render();
-  document.getElementById('rpBody').innerHTML='<p style="font-size:11px;color:var(--text3)">Click a column header to edit its properties.</p>';
+  activeCol=-1;render();
+  document.getElementById('rpBody').innerHTML='<p style="font-size:11px;color:var(--text3)">Click a column header to inspect and edit its properties.</p>';
   document.getElementById('rpTitle').textContent='Column Properties';
 }
 function renderProps(){
@@ -960,17 +1295,19 @@ function renderProps(){
       </select>
     </div>
     <div class="divider"></div>
-    <div class="rp-field"><label>Column Width (px)</label>
-      <input type="number" id="rp_w" value="${p.width||''}" placeholder="auto" oninput="updateColPropN('width',this.value)" min="40" max="600">
+    <div class="rp-row">
+      <div class="rp-field"><label>Width (px)</label>
+        <input type="number" id="rp_w" value="${p.width||''}" placeholder="auto"
+          oninput="updateColPropN('width',this.value)" min="40" max="600">
+      </div>
+      <div class="rp-field"><label>Align</label>
+        <select id="rp_align" onchange="updateColPropK('align',this.value)">
+          <option value="left" ${p.align!=='center'&&p.align!=='right'?'selected':''}>Left</option>
+          <option value="center" ${p.align==='center'?'selected':''}>Center</option>
+          <option value="right" ${p.align==='right'?'selected':''}>Right</option>
+        </select>
+      </div>
     </div>
-    <div class="rp-field"><label>Alignment</label>
-      <select id="rp_align" onchange="updateColPropK('align',this.value)">
-        <option value="left" ${p.align==='left'?'selected':''}>Left</option>
-        <option value="center" ${p.align==='center'?'selected':''}>Center</option>
-        <option value="right" ${p.align==='right'?'selected':''}>Right</option>
-      </select>
-    </div>
-    <div class="divider"></div>
     <div class="toggle-row">
       <span class="toggle-lbl">Hidden</span>
       <label class="toggle">
@@ -979,34 +1316,24 @@ function renderProps(){
         <span class="toggle-thumb"></span>
       </label>
     </div>
-    ${col.type===TYPE.FONT?`<div class="rp-field"><label>Preview Font</label>
-      <input type="text" id="rp_pfont" placeholder="Type font name to preview" oninput="previewFont(this.value)">
-      <div id="fontPv" style="margin-top:8px;font-size:18px;color:var(--text2)">The quick brown fox</div>
-    </div>`:''}
-    ${col.type===TYPE.IMAGE_URL?`<div class="rp-field"><label>Default/Fallback URL</label>
-      <input type="url" placeholder="https://…" value="${esc(p.defaultUrl||'')}">
-    </div>`:''}
     <div class="divider"></div>
-    <button class="btn btn-danger btn-sm" onclick="removeCol(${activeCol})">Remove Column</button>
+    ${col.type===TYPE.FONT?`<div class="rp-field"><label>Preview Font</label>
+      <input type="text" placeholder="Type font name to preview" oninput="previewFont(this.value)">
+      <div id="fontPv" style="margin-top:6px;font-size:16px;color:var(--text2)">The quick brown fox</div>
+    </div>`:''}
+    <button class="btn btn-danger btn-sm" style="margin-top:4px" onclick="removeCol(${activeCol})">Remove Column</button>
   `;
 }
 
 function updateColProp(key,val){
   if(key==='name'){
-    const trimmed=val.trim().replace(/\s+/g,'_');
-    if(!trimmed)return;
-    columns[activeCol].name=trimmed;
+    const t=val.trim().replace(/\s+/g,'_');if(!t)return;
+    columns[activeCol].name=t;
   } else {
     columns[activeCol].props=columns[activeCol].props||{};
     columns[activeCol].props[key]=val;
   }
-  renderColList();
-  // Re-render thead only
-  const h=document.getElementById('edThead');
-  if(h)h.querySelectorAll('th[data-ci]').forEach(th=>{
-    const ci=+th.dataset.ci;
-    if(ci===activeCol){th.querySelector('.th-name').textContent=columns[ci].name;}
-  });
+  renderSidebar();
 }
 function updateColPropN(key,val){
   columns[activeCol].props=columns[activeCol].props||{};
@@ -1015,15 +1342,15 @@ function updateColPropN(key,val){
 function updateColPropK(key,val){
   columns[activeCol].props=columns[activeCol].props||{};
   columns[activeCol].props[key]=val;
+  render();
 }
 function updateColType(val){
   const t=parseInt(val);
   columns[activeCol].type=t;
   const def=t===TYPE.BOOL?false:STR_TYPES.has(t)?'':0;
   rows.forEach(r=>{r[activeCol]=def;});
-  render();
-  renderProps();
-  toast(`Column type changed to ${TYPE_NAME[t]}`,'info');
+  render();renderProps();
+  toast(`Column type → ${TYPE_NAME[t]}`,'info');
 }
 function previewFont(name){
   loadFont(name);
@@ -1031,14 +1358,16 @@ function previewFont(name){
   if(el)el.style.fontFamily=name?`'${name}',sans-serif`:'';
 }
 
-// ─── META MODAL ───────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  META MODAL
+// ══════════════════════════════════════════════════════
 function showMeta(){
   document.getElementById('m_title').value=meta.title||'';
   document.getElementById('m_desc').value=meta.description||'';
   document.getElementById('m_font').value=meta.fontFamily||'';
   document.getElementById('m_theme').value=meta.theme||'dark';
   document.getElementById('m_fonts').value=(meta.customFonts||[]).join(', ');
-  document.getElementById('metaOverlay').classList.add('open');
+  openOverlay('metaOverlay');
 }
 function saveMeta(){
   meta.title=document.getElementById('m_title').value.trim();
@@ -1046,66 +1375,112 @@ function saveMeta(){
   meta.fontFamily=document.getElementById('m_font').value.trim();
   meta.theme=document.getElementById('m_theme').value;
   meta.customFonts=document.getElementById('m_fonts').value.split(',').map(s=>s.trim()).filter(Boolean);
-  closeOverlay('metaOverlay');
-  applyMeta();
+  closeOverlay('metaOverlay');applyMeta();
   toast('Table settings saved','ok');
 }
 
-// ─── SNIPPET MODAL ────────────────────────────────────────────────────────────
-function showSnippet(){document.getElementById('snippetOverlay').classList.add('open');}
-
-// ─── OVERLAY HELPERS ──────────────────────────────────────────────────────────
-function closeOverlay(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
-
-// ─── SAVE / LOAD ──────────────────────────────────────────────────────────────
-function saveTbl(){
+// ══════════════════════════════════════════════════════
+//  SAVE / LOAD
+// ══════════════════════════════════════════════════════
+function saveTbl(version){
   if(columns.length===0){toast('Add columns before saving','err');return;}
-  const buf=encode();
+  let buf,ext='tbl';
+  if(version==='v1'){
+    buf=encodeLegacyV1(columns,rows,meta);
+    currentFormat='v1';
+    toast(`Saved legacy .tbl v1 — ${rows.length} rows`,'info');
+  } else {
+    buf=encode();
+    currentFormat='v2';
+    toast(`Saved .tbl v2 — ${fmtBytes(buf.byteLength)}`,'ok');
+  }
   const blob=new Blob([buf],{type:'application/octet-stream'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=(meta.title||currentFile||'table')+'.tbl';a.click();
+  a.href=url;a.download=(meta.title||currentFile||'table')+'.'+ext;a.click();
   URL.revokeObjectURL(url);
-  toast(`Saved ${fmtBytes(buf.byteLength)} — ${rows.length} rows, ${columns.length} cols`,'ok');
+  updateStatus();
+}
+
+function saveTblx(){
+  if(columns.length===0){toast('Add columns before saving','err');return;}
+  const text=encodeTblx();
+  const blob=new Blob([text],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=(meta.title||currentFile||'table')+'.tblx';a.click();
+  URL.revokeObjectURL(url);
+  currentFormat='tblx';
+  toast(`Saved .tblx (Base-8 cipher) — ${fmtBytes(blob.size)}`,'tblx');
+  updateStatus();
 }
 
 function triggerOpen(){document.getElementById('fileIn').click();}
 
 function openFile(e){
   const file=e.target.files[0];if(!file)return;
-  file.arrayBuffer().then(buf=>{
-    try{
-      const d=decode(buf);
-      columns=d.columns;rows=d.rows;meta=d.meta||{};
-      selected.clear();filter='';activeCol=-1;
-      currentFile=file.name.replace(/\.tbl$/i,'');
-      document.getElementById('stFile').textContent=meta.title||currentFile;
-      render();
-      toast(`Loaded "${file.name}" — ${rows.length} rows, ${columns.length} cols`,'ok');
-    }catch(err){toast('Error: '+err.message,'err');}
-  });
+  const name=file.name;
+
+  if(name.endsWith('.tblx')){
+    // Text file
+    file.text().then(text=>{
+      try{
+        const d=decodeTblx(text);
+        columns=d.columns;rows=d.rows;meta=d.meta||{};
+        selected.clear();filter='';activeCol=-1;
+        currentFile=name.replace(/\.tblx$/i,'');
+        currentFormat='tblx';
+        render();
+        toast(`Loaded "${name}" (Base-8 cipher) — ${rows.length} rows, ${columns.length} cols`,'tblx');
+      }catch(err){toast('Error: '+err.message,'err');}
+    });
+  } else {
+    // Binary .tbl
+    file.arrayBuffer().then(buf=>{
+      try{
+        let d;
+        // try v2 first
+        try{d=decode(buf);}catch(_){d=null;}
+        if(!d){
+          // try legacy v1
+          d=decodeLegacyV1(buf);
+          currentFormat='v1';
+        } else {
+          currentFormat='v2';
+        }
+        columns=d.columns;rows=d.rows;meta=d.meta||{};
+        selected.clear();filter='';activeCol=-1;
+        currentFile=name.replace(/\.tbl$/i,'');
+        document.getElementById('stFile').textContent=meta.title||currentFile;
+        render();
+        toast(`Loaded "${name}" (${currentFormat}) — ${rows.length} rows, ${columns.length} cols`,'ok');
+      }catch(err){toast('Error: '+err.message,'err');}
+    });
+  }
   e.target.value='';
 }
 
 function newTable(){
   if(!confirm('Start a new table? Unsaved data will be lost.'))return;
-  columns=[];rows=[];meta={};selected.clear();filter='';activeCol=-1;currentFile='untitled';
+  columns=[];rows=[];meta={};selected.clear();filter='';activeCol=-1;
+  currentFile='untitled';currentFormat='v2';
   document.getElementById('stFile').textContent='untitled';
   render();toast('New table','info');
 }
 
-// ─── SAMPLE DATA ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  SAMPLE DATA
+// ══════════════════════════════════════════════════════
 function loadSample(){
   columns=[
-    {name:'id',       type:TYPE.INT32,    props:{width:60,align:'right'}},
-    {name:'name',     type:TYPE.STRING,   props:{width:140,align:'left'}},
-    {name:'avatar',   type:TYPE.IMAGE_URL,props:{width:200}},
-    {name:'role_color',type:TYPE.COLOR,   props:{width:160}},
-    {name:'score',    type:TYPE.FLOAT64,  props:{align:'right'}},
-    {name:'active',   type:TYPE.BOOL,     props:{align:'center',width:70}},
-    {name:'joined',   type:TYPE.DATE,     props:{}},
-    {name:'ui_font',  type:TYPE.FONT,     props:{width:180}},
+    {name:'id',       type:TYPE.INT32,    props:{width:60,align:'right',hidden:false}},
+    {name:'name',     type:TYPE.STRING,   props:{width:140,align:'left',hidden:false}},
+    {name:'avatar',   type:TYPE.IMAGE_URL,props:{width:200,hidden:false}},
+    {name:'color',    type:TYPE.COLOR,    props:{width:160,hidden:false}},
+    {name:'score',    type:TYPE.FLOAT64,  props:{align:'right',hidden:false}},
+    {name:'active',   type:TYPE.BOOL,     props:{align:'center',width:70,hidden:false}},
+    {name:'joined',   type:TYPE.DATE,     props:{hidden:false}},
+    {name:'ui_font',  type:TYPE.FONT,     props:{width:180,hidden:false}},
   ];
   rows=[
     [1,'Alice Chen',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=alice',  '#3b82f6',98.5, true, '2023-01-15','Pacifico'],
@@ -1114,21 +1489,73 @@ function loadSample(){
     [4,'Dan Price',   'https://api.dicebear.com/7.x/pixel-art/svg?seed=dan',    '#f59e0b',42.1, true, '2024-06-10','Orbitron'],
     [5,'Eve Santos',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=eve',    '#ef4444',55.75,false,'2024-01-28','Playfair Display'],
   ];
-  meta={title:'Team Roster',description:'Sample dataset with all column types',fontFamily:'Outfit',theme:'dark'};
-  selected.clear();filter='';activeCol=-1;currentFile='team-roster';
+  meta={title:'Team Roster',description:'Sample dataset',fontFamily:'Outfit',theme:'dark'};
+  selected.clear();filter='';activeCol=-1;currentFile='team-roster';currentFormat='v2';
   render();
-  toast('Sample data loaded — all 8 column types shown','ok');
+  toast('Sample loaded — 8 column types, try ⬇ Save as .tblx!','ok');
 }
 
-// ─── KEYBOARD SHORTCUTS ──────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  SAVE DROPDOWN
+// ══════════════════════════════════════════════════════
+function toggleSaveMenu(e){
+  if(e)e.stopPropagation();
+  document.getElementById('saveDropdown').classList.toggle('open');
+}
+document.addEventListener('click',()=>document.getElementById('saveDropdown')?.classList.remove('open'));
+
+// ══════════════════════════════════════════════════════
+//  MOBILE DRAWER
+// ══════════════════════════════════════════════════════
+function openMobDrawer(){
+  syncMobSidebar();
+  document.getElementById('mobDrawer').classList.add('open');
+  document.getElementById('mobOverlay').classList.add('open');
+}
+function closeMobDrawer(){
+  document.getElementById('mobDrawer').classList.remove('open');
+  document.getElementById('mobOverlay').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════════════
+//  OVERLAYS
+// ══════════════════════════════════════════════════════
+function openOverlay(id){document.getElementById(id).classList.add('open');}
+function closeOverlay(id){document.getElementById(id).classList.remove('open');}
+function showSnippet(){openOverlay('snippetOverlay');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ══════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════
+function toast(msg,type='info'){
+  const el=document.createElement('div');
+  el.className=`toast t-${type}`;el.textContent=msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(()=>el.style.opacity='0',2800);
+  setTimeout(()=>el.remove(),3100);
+}
+
+// ══════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════════════
 document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveTbl();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveTbl('v2');}
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='S'){e.preventDefault();saveTblx();}
   if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();addRow();}
-  if(e.key==='Escape'){deselectAll();closeOverlay('metaOverlay');closeOverlay('snippetOverlay');closeProps();}
   if((e.ctrlKey||e.metaKey)&&e.key==='h'){e.preventDefault();toggleHex();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();toggleCipher();}
+  if(e.key==='Escape'){
+    deselectAll();
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    closeProps();closeMobDrawer();
+    document.getElementById('saveDropdown')?.classList.remove('open');
+  }
 });
 
-// ─── INIT ────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
 render();
 </script>
 </body>
