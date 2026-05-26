@@ -1,6 +1,6 @@
 /*!
  * TBL.js
- * Binary JSON Table File Library
+ * REAL BINARY .tbl TABLE FILES
  * https://tbljs.netlify.app/tbl.js
  */
 
@@ -8,21 +8,49 @@
 
 "use strict";
 
-class TBLTable {
+function stringToBinary(str){
+
+    return str
+        .split("")
+        .map(char =>
+            char.charCodeAt(0)
+                .toString(2)
+                .padStart(8,"0")
+        )
+        .join("");
+
+}
+
+function binaryToString(binary){
+
+    let result = "";
+
+    for(let i = 0; i < binary.length; i += 8){
+
+        const byte = binary.slice(i,i+8);
+
+        if(byte.length < 8) continue;
+
+        result += String.fromCharCode(
+            parseInt(byte,2)
+        );
+
+    }
+
+    return result;
+
+}
+
+class TBLTable{
 
     constructor(data = {}){
 
-        this.columns = Array.isArray(data.columns)
-            ? data.columns
-            : [];
-
-        this.rows = Array.isArray(data.rows)
-            ? data.rows
-            : [];
+        this.columns = data.columns || [];
+        this.rows = data.rows || [];
 
         this.meta = data.meta || {
-            created: new Date().toISOString(),
-            version: "1.0"
+            version:"2.0",
+            created:new Date().toISOString()
         };
 
     }
@@ -43,7 +71,7 @@ class TBLTable {
 
         const row = [];
 
-        for(let i = 0; i < this.columns.length; i++){
+        for(let i=0;i<this.columns.length;i++){
 
             row.push(data[i] ?? "");
 
@@ -55,31 +83,9 @@ class TBLTable {
 
     }
 
-    removeRow(index){
-
-        this.rows.splice(index,1);
-
-        return this;
-
-    }
-
-    removeColumn(index){
-
-        this.columns.splice(index,1);
-
-        this.rows.forEach(row=>{
-            row.splice(index,1);
-        });
-
-        return this;
-
-    }
-
     setCell(row,col,value){
 
-        if(!this.rows[row]){
-            throw new Error("Row does not exist");
-        }
+        if(!this.rows[row]) return;
 
         this.rows[row][col] = value;
 
@@ -105,15 +111,17 @@ class TBLTable {
 
     toJSON(){
 
-        return JSON.stringify(this.toObject());
+        return JSON.stringify(
+            this.toObject()
+        );
 
     }
 
     toBinary(){
 
-        const encoder = new TextEncoder();
-
-        return encoder.encode(this.toJSON());
+        return stringToBinary(
+            this.toJSON()
+        );
 
     }
 
@@ -132,9 +140,11 @@ class TBLTable {
 
         const blob = this.toBlob();
 
-        const url = URL.createObjectURL(blob);
+        const url =
+            URL.createObjectURL(blob);
 
-        const a = document.createElement("a");
+        const a =
+            document.createElement("a");
 
         a.href = url;
         a.download = filename;
@@ -159,49 +169,45 @@ class TBLTable {
             : target;
 
         if(!container){
-            throw new Error("Container not found");
+
+            throw new Error(
+                "Container not found"
+            );
+
         }
 
         container.innerHTML = "";
 
-        const wrapper = document.createElement("div");
-        wrapper.className = "tbl-wrapper";
+        this.rows.forEach(row=>{
 
-        this.rows.forEach((row,rowIndex)=>{
+            const card =
+                document.createElement("div");
 
-            const card = document.createElement("div");
-            card.className = options.rowClass || "tbl-row";
+            card.className =
+                options.rowClass || "tbl-row";
 
-            row.forEach((cell,colIndex)=>{
+            row.forEach((cell,index)=>{
 
-                const div = document.createElement("div");
+                const div =
+                    document.createElement("div");
 
                 div.className =
                     options.cellClass || "tbl-cell";
 
-                const label = document.createElement("strong");
-
-                label.textContent =
-                    this.columns[colIndex] + ": ";
-
-                const value = document.createElement("span");
-
-                value.textContent = cell;
-
-                div.appendChild(label);
-                div.appendChild(value);
+                div.innerHTML = `
+                    <strong>
+                        ${this.columns[index]}:
+                    </strong>
+                    <span>${cell}</span>
+                `;
 
                 card.appendChild(div);
 
             });
 
-            wrapper.appendChild(card);
+            container.appendChild(card);
 
         });
-
-        container.appendChild(wrapper);
-
-        return wrapper;
 
     }
 
@@ -209,15 +215,12 @@ class TBLTable {
 
 const TBL = {
 
-    version:"1.0.0",
+    version:"2.0",
 
     Table:TBLTable,
 
-    create(data){
-
-        return new TBLTable(data);
-
-    },
+    stringToBinary,
+    binaryToString,
 
     encode(data){
 
@@ -226,28 +229,32 @@ const TBL = {
             ? data
             : JSON.stringify(data);
 
-        return new TextEncoder().encode(json);
+        return stringToBinary(json);
 
     },
 
-    decode(buffer){
+    decode(binary){
 
-        return new TextDecoder().decode(buffer);
+        return binaryToString(binary);
 
     },
 
-    parse(buffer){
+    parse(binary){
 
         try{
 
-            const json = this.decode(buffer);
+            const json =
+                binaryToString(binary);
 
-            return JSON.parse(json);
+            const data =
+                JSON.parse(json);
+
+            return new TBLTable(data);
 
         }catch(err){
 
             throw new Error(
-                "Invalid TBL file"
+                "Invalid TBL binary file"
             );
 
         }
@@ -256,15 +263,10 @@ const TBL = {
 
     async open(file){
 
-        if(!(file instanceof File)){
-            throw new Error("Expected File object");
-        }
+        const binary =
+            await file.text();
 
-        const buffer = await file.arrayBuffer();
-
-        const data = this.parse(buffer);
-
-        return new TBLTable(data);
+        return this.parse(binary);
 
     },
 
@@ -272,19 +274,10 @@ const TBL = {
 
         const res = await fetch(url);
 
-        if(!res.ok){
+        const binary =
+            await res.text();
 
-            throw new Error(
-                "Failed to fetch TBL file"
-            );
-
-        }
-
-        const buffer = await res.arrayBuffer();
-
-        const data = this.parse(buffer);
-
-        return new TBLTable(data);
+        return this.parse(binary);
 
     },
 
