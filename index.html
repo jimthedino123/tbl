@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TBL Builder</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+  background:#0f1117;
+  color:white;
+  padding:30px;
+}
+
+.container{
+  max-width:1200px;
+  margin:auto;
+}
+
+h1{
+  font-size:42px;
+  margin-bottom:10px;
+}
+
+.subtitle{
+  color:#aaa;
+  margin-bottom:25px;
+}
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+
+button{
+  background:#1e2638;
+  border:none;
+  color:white;
+  padding:12px 18px;
+  border-radius:10px;
+  cursor:pointer;
+  transition:0.2s;
+  font-size:15px;
+}
+
+button:hover{
+  background:#2f3a56;
+}
+
+.table-wrap{
+  overflow:auto;
+  border-radius:16px;
+  border:1px solid #2d3448;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:700px;
+}
+
+th{
+  background:#1a2030;
+  padding:14px;
+  border:1px solid #2c3347;
+}
+
+td{
+  border:1px solid #2c3347;
+  padding:0;
+}
+
+input{
+  width:100%;
+  background:#101521;
+  border:none;
+  color:white;
+  padding:14px;
+  outline:none;
+}
+
+.export-area{
+  margin-top:25px;
+}
+
+textarea{
+  width:100%;
+  height:220px;
+  background:#101521;
+  border:1px solid #2c3347;
+  color:#7dff9c;
+  padding:15px;
+  border-radius:12px;
+  resize:vertical;
+}
+
+.section{
+  margin-top:45px;
+}
+
+.code{
+  background:#0b0f18;
+  border:1px solid #2c3347;
+  padding:18px;
+  border-radius:14px;
+  overflow:auto;
+  white-space:pre-wrap;
+  line-height:1.5;
+  margin-top:15px;
+}
+
+.download-link{
+  display:inline-block;
+  margin-top:15px;
+  text-decoration:none;
+  color:white;
+  background:#2862ff;
+  padding:12px 16px;
+  border-radius:10px;
+}
+
+.info{
+  background:#151c2c;
+  padding:16px;
+  border-radius:12px;
+  margin-bottom:20px;
+  color:#c9d3ef;
+  line-height:1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>.TBL File Generator</h1>
+<p class="subtitle">Binary JSON table file creator</p>
+
+<div class="info">
+A .tbl file stores table data as binary-encoded JSON.
+This editor lets you create, export, import and preview TBL files.
+</div>
+
+<div class="toolbar">
+  <button onclick="addRow()">Add Row</button>
+  <button onclick="addColumn()">Add Column</button>
+  <button onclick="exportTBL()">Export .tbl</button>
+  <button onclick="importTBL()">Import .tbl</button>
+  <button onclick="previewJSON()">Preview JSON</button>
+</div>
+
+<div class="table-wrap">
+  <table id="editorTable">
+    <thead>
+      <tr id="headerRow">
+        <th><input value="Name"></th>
+        <th><input value="Age"></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr>
+        <td><input value="Tyler"></td>
+        <td><input value="13"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="export-area">
+  <textarea id="output" placeholder="Output preview..."></textarea>
+</div>
+
+<div class="section">
+<h2>TBL.js Embed Snippet</h2>
+
+<div class="code">
+&lt;script src="https://tbljs.netlify.app/tbl.js"&gt;&lt;/script&gt;
+
+&lt;script&gt;
+const table = new TBL.Table({
+  columns: ["Name","Age","Country"],
+  rows: [
+    ["Tyler",13,"UK"],
+    ["Lana",12,"USA"]
+  ]
+});
+
+table.download("people.tbl");
+&lt;/script&gt;
+</div>
+</div>
+
+<div class="section">
+<h2>Loading a .tbl File</h2>
+
+<div class="code">
+&lt;script src="https://tbljs.netlify.app/tbl.js"&gt;&lt;/script&gt;
+
+&lt;script&gt;
+async function load(){
+  const tbl = await TBL.fetch("people.tbl");
+
+  console.log(tbl.columns);
+  console.log(tbl.rows);
+}
+
+load();
+&lt;/script&gt;
+</div>
+</div>
+
+<div class="section">
+<h2>Rendering TBL Files Into DIVs</h2>
+
+<div class="code">
+&lt;div id="users"&gt;&lt;/div&gt;
+
+&lt;script src="https://tbljs.netlify.app/tbl.js"&gt;&lt;/script&gt;
+
+&lt;script&gt;
+async function render(){
+
+  const tbl = await TBL.fetch("people.tbl");
+
+  const container = document.getElementById("users");
+
+  tbl.rows.forEach(row =&gt; {
+
+    const card = document.createElement("div");
+
+    card.className = "user-card";
+
+    card.innerHTML = `
+      &lt;h2&gt;${row[0]}&lt;/h2&gt;
+      &lt;p&gt;Age: ${row[1]}&lt;/p&gt;
+      &lt;p&gt;Country: ${row[2]}&lt;/p&gt;
+    `;
+
+    container.appendChild(card);
+
+  });
+
+}
+
+render();
+&lt;/script&gt;
+</div>
+</div>
+
+<div class="section">
+<h2>tbl.js Library Code</h2>
+
+<div class="code">
+class TBLTable{
+
+  constructor(data){
+    this.columns = data.columns || [];
+    this.rows = data.rows || [];
+  }
+
+  toJSON(){
+    return {
+      columns:this.columns,
+      rows:this.rows
+    };
+  }
+
+  toBinary(){
+
+    const json = JSON.stringify(this.toJSON());
+
+    const encoder = new TextEncoder();
+
+    return encoder.encode(json);
+
+  }
+
+  download(filename="table.tbl"){
+
+    const blob = new Blob(
+      [this.toBinary()],
+      {type:"application/octet-stream"}
+    );
+
+    const a = document.createElement("a");
+
+    a.href = URL.createObjectURL(blob);
+
+    a.download = filename;
+
+    a.click();
+
+  }
+
+}
+
+window.TBL = {
+
+  Table:TBLTable,
+
+  parse(buffer){
+
+    const decoder = new TextDecoder();
+
+    const json = decoder.decode(buffer);
+
+    return JSON.parse(json);
+
+  },
+
+  async fetch(url){
+
+    const res = await fetch(url);
+
+    const buffer = await res.arrayBuffer();
+
+    const data = TBL.parse(buffer);
+
+    return data;
+
+  }
+
+};
+</div>
+</div>
+
+</div>
+
+<script>
+const table = document.getElementById("editorTable");
+const tbody = document.getElementById("tableBody");
+const output = document.getElementById("output");
+
+function addRow(){
+
+  const cols = document.querySelectorAll("#headerRow th").length;
+
+  const tr = document.createElement("tr");
+
+  for(let i=0;i<cols;i++){
+
+    const td = document.createElement("td");
+
+    td.innerHTML = `<input placeholder="Cell">`;
+
+    tr.appendChild(td);
+
+  }
+
+  tbody.appendChild(tr);
+
+}
+
+function addColumn(){
+
+  const headerRow = document.getElementById("headerRow");
+
+  const th = document.createElement("th");
+
+  th.innerHTML = `<input value="Column">`;
+
+  headerRow.appendChild(th);
+
+  document.querySelectorAll("#tableBody tr").forEach(row=>{
+
+    const td = document.createElement("td");
+
+    td.innerHTML = `<input placeholder="Cell">`;
+
+    row.appendChild(td);
+
+  });
+
+}
+
+function getTableData(){
+
+  const columns = [];
+
+  document.querySelectorAll("#headerRow input").forEach(input=>{
+
+    columns.push(input.value);
+
+  });
+
+  const rows = [];
+
+  document.querySelectorAll("#tableBody tr").forEach(tr=>{
+
+    const row = [];
+
+    tr.querySelectorAll("input").forEach(input=>{
+
+      row.push(input.value);
+
+    });
+
+    rows.push(row);
+
+  });
+
+  return {
+    columns,
+    rows
+  };
+
+}
+
+function previewJSON(){
+
+  output.value = JSON.stringify(getTableData(),null,2);
+
+}
+
+function exportTBL(){
+
+  const data = getTableData();
+
+  const json = JSON.stringify(data);
+
+  const encoder = new TextEncoder();
+
+  const binary = encoder.encode(json);
+
+  const blob = new Blob(
+    [binary],
+    {type:"application/octet-stream"}
+  );
+
+  const a = document.createElement("a");
+
+  a.href = URL.createObjectURL(blob);
+
+  a.download = "table.tbl";
+
+  a.click();
+
+}
+
+function importTBL(){
+
+  const input = document.createElement("input");
+
+  input.type = "file";
+
+  input.accept = ".tbl";
+
+  input.onchange = async e => {
+
+    const file = e.target.files[0];
+
+    const buffer = await file.arrayBuffer();
+
+    const decoder = new TextDecoder();
+
+    const json = decoder.decode(buffer);
+
+    const data = JSON.parse(json);
+
+    loadTable(data);
+
+  };
+
+  input.click();
+
+}
+
+function loadTable(data){
+
+  document.getElementById("headerRow").innerHTML = "";
+  tbody.innerHTML = "";
+
+  data.columns.forEach(col=>{
+
+    const th = document.createElement("th");
+
+    th.innerHTML = `<input value="${col}">`;
+
+    document.getElementById("headerRow").appendChild(th);
+
+  });
+
+  data.rows.forEach(row=>{
+
+    const tr = document.createElement("tr");
+
+    row.forEach(cell=>{
+
+      const td = document.createElement("td");
+
+      td.innerHTML = `<input value="${cell}">`;
+
+      tr.appendChild(td);
+
+    });
+
+    tbody.appendChild(tr);
+
+  });
+
+}
+</script>
+
+</body>
+</html>
