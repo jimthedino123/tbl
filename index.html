@@ -175,9 +175,91 @@ This editor lets you create, export, import and preview TBL files.
   </table>
 </div>
 
-<div class="export-area">
-  <textarea id="output" placeholder="Output preview..."></textarea>
-</div>
+<!-- REPLACE YOUR EXPORT FUNCTION WITH THIS -->
+
+<script>
+function stringToBinary(str){
+
+  return str
+    .split("")
+    .map(char =>
+      char.charCodeAt(0)
+        .toString(2)
+        .padStart(8,"0")
+    )
+    .join("");
+
+}
+
+function binaryToString(binary){
+
+  let result = "";
+
+  for(let i=0;i<binary.length;i+=8){
+
+    const byte = binary.slice(i,i+8);
+
+    result += String.fromCharCode(
+      parseInt(byte,2)
+    );
+
+  }
+
+  return result;
+
+}
+
+function exportTBL(){
+
+  const data = getTableData();
+
+  const json = JSON.stringify(data);
+
+  const binary = stringToBinary(json);
+
+  const blob = new Blob(
+    [binary],
+    {
+      type:"application/octet-stream"
+    }
+  );
+
+  const a = document.createElement("a");
+
+  a.href = URL.createObjectURL(blob);
+
+  a.download = "table.tbl";
+
+  a.click();
+
+}
+
+function importTBL(){
+
+  const input = document.createElement("input");
+
+  input.type = "file";
+
+  input.accept = ".tbl";
+
+  input.onchange = async e => {
+
+    const file = e.target.files[0];
+
+    const text = await file.text();
+
+    const json = binaryToString(text);
+
+    const data = JSON.parse(json);
+
+    loadTable(data);
+
+  };
+
+  input.click();
+
+}
+</script>
 
 <div class="section">
 <h2>TBL.js Embed Snippet</h2>
