@@ -3,1184 +3,1133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TBL Editor — Binary Table Studio</title>
+<title>TBL Studio v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:       #080b12;
-    --surface:  #0d1220;
-    --panel:    #111827;
-    --border:   #1e2d45;
-    --accent:   #00d4ff;
-    --accent2:  #7c3aed;
-    --accent3:  #f59e0b;
-    --danger:   #ef4444;
-    --success:  #10b981;
-    --text:     #e2e8f0;
-    --muted:    #64748b;
-    --glow:     0 0 20px rgba(0,212,255,0.3);
-    --glow2:    0 0 20px rgba(124,58,237,0.3);
-  }
+/* ════════════════════════════════ RESET & VARS ═══════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:        #06080f;
+  --bg2:       #0b0e18;
+  --surface:   #0e1220;
+  --panel:     #121828;
+  --panel2:    #161d2e;
+  --border:    #1c2740;
+  --border2:   #243050;
+  --accent:    #3b82f6;
+  --accentL:   #60a5fa;
+  --accent2:   #8b5cf6;
+  --accent3:   #f59e0b;
+  --green:     #10b981;
+  --red:       #ef4444;
+  --pink:      #ec4899;
+  --text:      #e2e8f0;
+  --text2:     #94a3b8;
+  --text3:     #475569;
+  --glow:      0 0 24px rgba(59,130,246,.25);
+  --glow2:     0 0 24px rgba(139,92,246,.25);
+  --r:         6px;
+}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ════════════════════════════════ NOISE OVERLAY ═════════════════════════ */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.5
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+/* ════════════════════════════════ LAYOUT ════════════════════════════════ */
+.app{display:grid;grid-template-rows:52px 1fr;grid-template-columns:260px 1fr 300px;height:100vh;position:relative;z-index:1}
+.app.no-props{grid-template-columns:260px 1fr 0}
 
-  /* ── GRID BACKGROUND ── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image:
-      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-    background-size: 32px 32px;
-    pointer-events: none;
-    z-index: 0;
-  }
+/* ════════════════════════════════ TOPBAR ════════════════════════════════ */
+.topbar{
+  grid-column:1/-1;
+  display:flex;align-items:center;gap:0;
+  border-bottom:1px solid var(--border);
+  background:rgba(6,8,15,.9);backdrop-filter:blur(16px);
+  padding:0 16px;
+}
+.logo{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:18px;
+  letter-spacing:.5px;color:var(--text);
+  display:flex;align-items:center;gap:8px;padding-right:20px;
+  border-right:1px solid var(--border);margin-right:16px;
+}
+.logo em{color:var(--accent);font-style:normal}
+.logo-v{
+  font-family:'JetBrains Mono',monospace;font-size:9px;
+  background:var(--accent);color:#fff;padding:2px 5px;border-radius:3px;
+  font-weight:700;letter-spacing:1px;vertical-align:middle;
+}
+.topbar-actions{display:flex;gap:6px;margin-left:auto}
+.topbar-center{display:flex;gap:4px}
 
-  /* ── SCANLINES ── */
-  body::after {
-    content: '';
-    position: fixed; inset: 0;
-    background: repeating-linear-gradient(
-      transparent, transparent 2px,
-      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
-    );
-    pointer-events: none;
-    z-index: 0;
-  }
+/* ════════════════════════════════ BUTTONS ════════════════════════════════ */
+.btn{
+  font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.5px;
+  padding:6px 14px;border:1px solid var(--border2);border-radius:var(--r);
+  cursor:pointer;transition:all .12s;background:transparent;color:var(--text2);
+  white-space:nowrap;
+}
+.btn:hover{border-color:var(--accent);color:var(--accentL);background:rgba(59,130,246,.07)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
+.btn-primary:hover{background:#2563eb;border-color:#2563eb;color:#fff;box-shadow:var(--glow)}
+.btn-ghost{border-color:transparent;color:var(--text3)}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text2);background:var(--panel)}
+.btn-danger{border-color:rgba(239,68,68,.3);color:#f87171}
+.btn-danger:hover{background:rgba(239,68,68,.12);border-color:var(--red)}
+.btn-green{border-color:rgba(16,185,129,.3);color:#34d399}
+.btn-green:hover{background:rgba(16,185,129,.12);border-color:var(--green)}
+.btn-purple{border-color:rgba(139,92,246,.3);color:#a78bfa}
+.btn-purple:hover{background:rgba(139,92,246,.12);border-color:var(--accent2)}
+.btn-sm{padding:4px 10px;font-size:10px}
+.btn-xs{padding:2px 7px;font-size:10px}
+.btn-icon{padding:5px 8px;font-size:13px;line-height:1}
 
-  /* ── HEADER ── */
-  header {
-    position: relative; z-index: 10;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 32px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(8,11,18,0.85);
-    backdrop-filter: blur(12px);
-  }
+/* ════════════════════════════════ LEFT SIDEBAR ══════════════════════════ */
+.sidebar-left{
+  border-right:1px solid var(--border);background:var(--bg2);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sb-section{padding:14px 14px;border-bottom:1px solid var(--border)}
+.sb-label{
+  font-family:'Outfit',sans-serif;font-size:9px;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--text3);
+  display:flex;align-items:center;gap:8px;margin-bottom:12px;
+}
+.sb-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-  .logo {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 900;
-    font-size: 26px;
-    letter-spacing: 4px;
-    color: var(--accent);
-    text-shadow: var(--glow);
-    display: flex; align-items: center; gap: 12px;
-  }
+/* column list */
+.col-list{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;max-height:200px;overflow-y:auto}
+.col-item{
+  display:flex;align-items:center;gap:6px;padding:6px 8px;
+  border:1px solid var(--border);border-radius:4px;background:var(--panel);
+  cursor:pointer;transition:all .1s;
+}
+.col-item:hover{border-color:var(--border2);background:var(--panel2)}
+.col-item.active{border-color:var(--accent);background:rgba(59,130,246,.08)}
+.col-name-text{flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.type-chip{
+  font-size:8px;padding:2px 5px;border-radius:3px;font-weight:700;
+  letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;
+}
+.tc-0{background:rgba(59,130,246,.15);color:#60a5fa}
+.tc-1{background:rgba(245,158,11,.15);color:#fbbf24}
+.tc-2{background:rgba(139,92,246,.15);color:#a78bfa}
+.tc-3{background:rgba(16,185,129,.15);color:#34d399}
+.tc-4{background:rgba(236,72,153,.15);color:#f472b6}
+.tc-5{background:rgba(239,68,68,.15);color:#f87171}
+.tc-6{background:rgba(251,191,36,.15);color:#fde68a}
+.tc-7{background:rgba(167,139,250,.15);color:#c4b5fd}
 
-  .logo span { color: var(--text); }
+/* add column form */
+.add-col-form{display:flex;flex-direction:column;gap:7px}
+label.form-label{font-size:10px;color:var(--text3);margin-bottom:2px;display:block}
+input[type=text],input[type=url],input[type=date],input[type=number],input[type=color],select,textarea{
+  width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 9px;
+  border-radius:var(--r);outline:none;transition:border-color .12s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.15)}
+select option{background:var(--panel2)}
+textarea{resize:vertical;min-height:56px;line-height:1.5}
+input[type=color]{padding:2px 4px;height:32px;cursor:pointer}
 
-  .logo-badge {
-    font-size: 9px;
-    background: var(--accent);
-    color: var(--bg);
-    padding: 2px 6px;
-    border-radius: 2px;
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    letter-spacing: 2px;
-    vertical-align: middle;
-    margin-left: 4px;
-  }
+/* quick row buttons */
+.row-btns{display:flex;flex-direction:column;gap:5px}
 
-  .header-actions { display: flex; gap: 10px; align-items: center; }
+/* ════════════════════════════════ MAIN AREA ═════════════════════════════ */
+.main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 
-  /* ── BUTTONS ── */
-  .btn {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 1px;
-    padding: 8px 18px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.15s;
-    text-transform: uppercase;
-    background: transparent;
-    color: var(--text);
-  }
-  .btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: var(--glow); }
+.toolbar{
+  display:flex;align-items:center;gap:6px;padding:8px 14px;
+  border-bottom:1px solid var(--border);background:var(--bg2);
+  flex-wrap:wrap;flex-shrink:0;
+}
+.toolbar-sep{width:1px;height:22px;background:var(--border);flex-shrink:0}
+.search-wrap{display:flex;align-items:center;gap:0;flex:1;max-width:220px}
+.search-wrap input{border-radius:var(--r) 0 0 var(--r);border-right:0}
+.search-wrap .btn{border-radius:0 var(--r) var(--r) 0;padding:6px 9px}
 
-  .btn-primary {
-    background: var(--accent); color: var(--bg);
-    border-color: var(--accent); font-weight: 700;
-  }
-  .btn-primary:hover { background: #00b8d9; box-shadow: var(--glow); color: var(--bg); }
+.table-viewport{flex:1;overflow:auto;position:relative}
 
-  .btn-danger { border-color: var(--danger); color: var(--danger); }
-  .btn-danger:hover { background: var(--danger); color: #fff; box-shadow: 0 0 20px rgba(239,68,68,0.4); }
+/* ═══════════════════════════ EDITOR TABLE ═══════════════════════════════ */
+.tbl-editor{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+.tbl-editor th{
+  background:var(--panel);color:var(--accentL);padding:0;
+  border:1px solid var(--border);position:sticky;top:0;z-index:5;
+  font-family:'Outfit',sans-serif;font-weight:600;
+  user-select:none;
+}
+.th-inner{display:flex;align-items:center;gap:6px;padding:8px 10px;cursor:pointer}
+.th-inner:hover{background:rgba(59,130,246,.07)}
+.th-name{font-size:10px;letter-spacing:.8px;text-transform:uppercase;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.th-type2{font-size:8px;color:var(--text3);flex-shrink:0}
+.th-actions{display:flex;gap:2px;padding-right:6px;opacity:0;transition:opacity .15s}
+.tbl-editor th:hover .th-actions{opacity:1}
+th.col-active{border-color:var(--accent)!important;background:rgba(59,130,246,.06)!important}
+th.row-num-th{background:rgba(0,0,0,.25);color:var(--text3);font-size:9px;width:42px;text-align:center;cursor:default}
 
-  .btn-success { border-color: var(--success); color: var(--success); }
-  .btn-success:hover { background: var(--success); color: var(--bg); box-shadow: 0 0 20px rgba(16,185,129,0.4); }
+.tbl-editor td{
+  border:1px solid var(--border);background:var(--surface);
+  vertical-align:middle;transition:background .08s;padding:0;
+}
+.tbl-editor tr:hover td{background:var(--panel)}
+.tbl-editor tr.row-sel td{background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2)}
+td.row-num-td{background:rgba(0,0,0,.2)!important;color:var(--text3);font-size:9px;text-align:center;width:42px;padding:0 4px;pointer-events:none}
+td.cell-focused{outline:2px solid var(--accent);outline-offset:-2px;z-index:2;position:relative}
 
-  .btn-purple { border-color: var(--accent2); color: var(--accent2); }
-  .btn-purple:hover { background: var(--accent2); color: #fff; box-shadow: var(--glow2); }
+/* ── Cell inputs ── */
+.cell-in{
+  width:100%;background:transparent;border:none;outline:none;
+  color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;
+  padding:7px 10px;line-height:1.4;
+}
+.cell-in::placeholder{color:var(--text3)}
+.cell-img-wrap{padding:5px 8px;display:flex;align-items:center;gap:8px}
+.cell-img-thumb{width:48px;height:34px;object-fit:cover;border-radius:3px;border:1px solid var(--border);flex-shrink:0;background:var(--panel)}
+.cell-img-thumb.err{display:none}
+.cell-img-url{flex:1;font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.cell-color-wrap{display:flex;align-items:center;gap:7px;padding:4px 8px}
+.color-swatch{width:22px;height:22px;border-radius:3px;border:1px solid rgba(255,255,255,.1);flex-shrink:0;cursor:pointer}
+.cell-bool{display:flex;align-items:center;justify-content:center;height:36px;cursor:pointer;font-size:18px;transition:transform .1s}
+.cell-bool:hover{transform:scale(1.2)}
+.cell-bool.t{color:var(--green)}
+.cell-bool.f{color:var(--text3)}
+.cell-date{padding:5px 8px;color:var(--accent3);font-size:11px}
+.cell-font-wrap{padding:5px 8px;display:flex;flex-direction:column;gap:1px}
+.cell-font-preview{font-size:13px;color:var(--text)}
+.cell-font-name{font-size:9px;color:var(--text3)}
 
-  .btn-sm { padding: 4px 10px; font-size: 10px; }
-  .btn-xs { padding: 2px 7px; font-size: 10px; }
+/* ════════════════════════════════ HEX STRIP ═════════════════════════════ */
+.hex-strip{
+  border-top:1px solid var(--border);background:var(--bg2);
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);
+  padding:10px 14px;max-height:120px;overflow-y:auto;display:none;flex-shrink:0;
+}
+.hex-strip.open{display:block}
+.hex-row{display:flex;gap:14px;line-height:1.9}
+.hex-addr{color:var(--accent);min-width:70px}
+.hex-bytes{color:var(--text);letter-spacing:1.5px;flex:1}
+.hex-asc{color:var(--accent2);min-width:130px}
+.hb-magic{color:var(--accent3);font-weight:700}
+.hb-ver{color:var(--accentL)}
 
-  /* ── LAYOUT ── */
-  .workspace {
-    position: relative; z-index: 1;
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    grid-template-rows: auto 1fr auto;
-    min-height: calc(100vh - 65px);
-  }
+/* ════════════════════════════════ RIGHT PANEL ═══════════════════════════ */
+.sidebar-right{
+  border-left:1px solid var(--border);background:var(--bg2);
+  display:flex;flex-direction:column;overflow-y:auto;
+  transition:width .15s;
+}
+.rp-header{
+  padding:12px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.rp-title{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--accentL);letter-spacing:.5px}
+.rp-body{padding:14px;display:flex;flex-direction:column;gap:12px;flex:1}
+.rp-field{display:flex;flex-direction:column;gap:5px}
+.rp-field label{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.rp-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.toggle-lbl{font-size:11px;color:var(--text2)}
+.toggle{position:relative;width:34px;height:18px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:9px;transition:.2s}
+.toggle input:checked~.toggle-track{background:var(--accent)}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:.2s}
+.toggle input:checked~.toggle-track~.toggle-thumb{left:18px}
+.divider{height:1px;background:var(--border);margin:4px 0}
 
-  /* ── SIDEBAR ── */
-  .sidebar {
-    grid-row: 1 / 3;
-    border-right: 1px solid var(--border);
-    background: var(--surface);
-    display: flex; flex-direction: column;
-    overflow-y: auto;
-  }
+/* ════════════════════════════════ META MODAL ════════════════════════════ */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);
+  z-index:100;display:none;align-items:center;justify-content:center;
+}
+.overlay.open{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border2);border-radius:10px;
+  padding:24px;width:580px;max-width:95vw;max-height:88vh;overflow-y:auto;
+  box-shadow:0 32px 80px rgba(0,0,0,.6),var(--glow);
+}
+.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--accentL);margin-bottom:18px;letter-spacing:.5px}
+.modal pre{
+  background:var(--panel);border:1px solid var(--border);border-radius:5px;
+  padding:13px;font-size:10.5px;overflow-x:auto;color:var(--text);line-height:1.8;
+  margin-bottom:10px;
+}
+.modal p{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:10px}
+.modal h3{font-family:'Outfit',sans-serif;font-size:11px;color:var(--accent3);letter-spacing:1px;text-transform:uppercase;margin:14px 0 6px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-  .sidebar-section {
-    padding: 20px;
-    border-bottom: 1px solid var(--border);
-  }
+/* ════════════════════════════════ STATUS BAR ════════════════════════════ */
+.statusbar{
+  grid-column:1/-1;display:flex;align-items:center;gap:18px;
+  padding:6px 16px;border-top:1px solid var(--border);
+  background:var(--bg2);font-size:10px;color:var(--text3);flex-shrink:0;
+}
+.st-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+.st-item{display:flex;align-items:center;gap:5px}
+.st-val{color:var(--text2)}
 
-  .sidebar-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 9px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 14px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .sidebar-title::after {
-    content: ''; flex: 1; height: 1px; background: var(--border);
-  }
+/* ════════════════════════════════ TOASTS ════════════════════════════════ */
+.toasts{position:fixed;top:16px;right:16px;z-index:200;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{
+  padding:9px 16px;border-radius:var(--r);font-size:11px;border:1px solid;
+  animation:tIn .18s ease;box-shadow:0 6px 24px rgba(0,0,0,.4);pointer-events:auto;
+  font-family:'JetBrains Mono',monospace;max-width:340px;
+}
+.t-ok{background:rgba(16,185,129,.12);border-color:var(--green);color:#34d399}
+.t-err{background:rgba(239,68,68,.12);border-color:var(--red);color:#f87171}
+.t-info{background:rgba(59,130,246,.1);border-color:var(--accent);color:var(--accentL)}
+@keyframes tIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
 
-  /* ── COLUMN EDITOR ── */
-  .col-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-
-  .col-item {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center; gap: 6px;
-    padding: 8px 10px;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    transition: border-color 0.15s;
-  }
-  .col-item:hover { border-color: var(--accent); }
-
-  .col-name {
-    font-size: 12px;
-    color: var(--text);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .col-type-badge {
-    font-size: 9px; letter-spacing: 1px; padding: 2px 5px;
-    border-radius: 2px; text-transform: uppercase; font-weight: 700;
-  }
-  .type-0 { background: rgba(0,212,255,0.15); color: var(--accent); }
-  .type-1 { background: rgba(245,158,11,0.15); color: var(--accent3); }
-  .type-2 { background: rgba(124,58,237,0.15); color: #a78bfa; }
-  .type-3 { background: rgba(16,185,129,0.15); color: var(--success); }
-
-  /* ── ADD COLUMN FORM ── */
-  .add-col-form { display: flex; flex-direction: column; gap: 8px; }
-
-  input[type="text"], select {
-    width: 100%;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    padding: 8px 10px;
-    border-radius: 4px;
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  input[type="text"]:focus, select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(0,212,255,0.15);
-  }
-  select option { background: var(--panel); }
-
-  /* ── MAIN EDITOR AREA ── */
-  .editor-area {
-    display: flex; flex-direction: column;
-    overflow: hidden;
-  }
-
-  .editor-toolbar {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    flex-wrap: wrap;
-  }
-
-  .toolbar-group { display: flex; gap: 6px; align-items: center; }
-  .toolbar-sep { width: 1px; height: 24px; background: var(--border); }
-
-  .table-wrap {
-    flex: 1;
-    overflow: auto;
-    padding: 20px;
-  }
-
-  /* ── THE BINARY TABLE ── */
-  .tbl-editor-table {
-    border-collapse: separate;
-    border-spacing: 0;
-    width: 100%;
-    font-size: 13px;
-  }
-
-  .tbl-editor-table th {
-    background: var(--panel);
-    color: var(--accent);
-    font-family: 'Orbitron', sans-serif;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 10px 12px;
-    border: 1px solid var(--border);
-    white-space: nowrap;
-    position: sticky; top: 0; z-index: 2;
-    user-select: none;
-  }
-  .tbl-editor-table th:first-child {
-    background: rgba(0,0,0,0.3);
-    color: var(--muted);
-    width: 50px;
-    font-size: 9px;
-  }
-
-  .th-inner { display: flex; flex-direction: column; gap: 2px; }
-  .th-type { font-size: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-weight: normal; }
-
-  .tbl-editor-table td {
-    padding: 0;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    transition: background 0.1s;
-  }
-  .tbl-editor-table td:first-child {
-    background: rgba(0,0,0,0.2);
-    color: var(--muted);
-    font-size: 10px;
-    text-align: center;
-    padding: 0 8px;
-    width: 50px;
-    pointer-events: none;
-  }
-
-  .tbl-editor-table tr:hover td { background: var(--panel); }
-  .tbl-editor-table tr:hover td:first-child { background: rgba(0,0,0,0.3); }
-
-  .cell-input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    padding: 8px 12px;
-    line-height: 1.4;
-  }
-  .cell-input:focus { background: rgba(0,212,255,0.05); }
-  .cell-input.type-bool { text-align: center; cursor: pointer; }
-  .cell-input.type-bool.val-true { color: var(--success); }
-  .cell-input.type-bool.val-false { color: var(--muted); }
-
-  .td-selected { outline: 2px solid var(--accent) !important; outline-offset: -2px; }
-
-  /* ── STATUS BAR ── */
-  .statusbar {
-    grid-column: 1 / 3;
-    display: flex; align-items: center; gap: 20px;
-    padding: 8px 24px;
-    border-top: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 11px; color: var(--muted);
-  }
-  .status-item { display: flex; gap: 6px; align-items: center; }
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
-  .status-dot.warn { background: var(--accent3); }
-
-  /* ── HEX VIEWER ── */
-  .hex-panel {
-    border-top: 1px solid var(--border);
-    background: var(--panel);
-    padding: 14px 20px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    color: var(--muted);
-    max-height: 140px;
-    overflow-y: auto;
-    display: none;
-  }
-  .hex-panel.visible { display: block; }
-  .hex-row { display: flex; gap: 12px; line-height: 1.8; }
-  .hex-addr { color: var(--accent); min-width: 60px; }
-  .hex-bytes { color: var(--text); letter-spacing: 1px; flex: 1; }
-  .hex-ascii { color: var(--accent2); min-width: 140px; }
-  .hex-byte-accent { color: var(--accent); }
-  .hex-byte-magic { color: var(--accent3); font-weight: bold; }
-
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(4px);
-    z-index: 100;
-    display: none; align-items: center; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 28px;
-    width: 560px;
-    max-width: 95vw;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.6), var(--glow);
-  }
-  .modal h2 {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 14px; letter-spacing: 3px;
-    color: var(--accent); margin-bottom: 20px;
-  }
-  .modal pre {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 4px; padding: 14px;
-    font-size: 11px; overflow-x: auto;
-    color: var(--text); line-height: 1.7;
-    margin-bottom: 12px;
-  }
-  .modal .close-btn { margin-top: 16px; }
-
-  /* ── EMPTY STATE ── */
-  .empty-state {
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 60px 20px; gap: 16px;
-    color: var(--muted); text-align: center;
-  }
-  .empty-icon {
-    font-size: 48px;
-    filter: grayscale(1) opacity(0.3);
-  }
-  .empty-title { font-family: 'Orbitron', sans-serif; font-size: 14px; letter-spacing: 2px; color: var(--border); }
-  .empty-sub { font-size: 11px; max-width: 300px; line-height: 1.6; }
-
-  /* ── TOAST ── */
-  .toast-container { position: fixed; top: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
-  .toast {
-    padding: 10px 18px; border-radius: 4px; font-size: 12px;
-    border: 1px solid; animation: toastIn 0.2s ease;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-  }
-  .toast.success { background: rgba(16,185,129,0.15); border-color: var(--success); color: var(--success); }
-  .toast.error { background: rgba(239,68,68,0.15); border-color: var(--danger); color: var(--danger); }
-  .toast.info { background: rgba(0,212,255,0.1); border-color: var(--accent); color: var(--accent); }
-  @keyframes toastIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform:none; } }
-
-  /* ── SCROLLBARS ── */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-  /* ── DRAG HANDLE ── */
-  .col-drag { cursor: grab; color: var(--border); font-size: 14px; line-height: 1; }
-  .col-drag:hover { color: var(--accent); }
-
-  /* ── FILE INFO ── */
-  .file-info {
-    padding: 14px 20px;
-    background: rgba(0,212,255,0.05);
-    border-bottom: 1px solid var(--border);
-    display: none;
-    font-size: 11px;
-  }
-  .file-info.visible { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
-  .file-info-item { color: var(--muted); }
-  .file-info-item strong { color: var(--accent); }
+/* ════════════════════════════════ EMPTY STATE ═══════════════════════════ */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:var(--text3)}
+.empty-ico{font-size:44px;opacity:.2}
+.empty-head{font-family:'Syne',sans-serif;font-size:14px;letter-spacing:2px;color:var(--border2)}
+.empty-sub{font-size:10px;text-align:center;max-width:280px;line-height:1.8}
 </style>
 </head>
 <body>
+<div class="toasts" id="toasts"></div>
 
-<!-- TOAST CONTAINER -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- HEADER -->
-<header>
-  <div class="logo">
-    TBL<span>STUDIO</span>
-    <span class="logo-badge">v1.0</span>
+<!-- ════════════════════════════ META MODAL ════════════════════════════════ -->
+<div class="overlay" id="metaOverlay">
+<div class="modal">
+  <div class="modal-title">⚙ Table Settings</div>
+  <div class="modal-grid">
+    <div class="rp-field"><label>Table Title</label><input type="text" id="m_title" placeholder="My Dataset"></div>
+    <div class="rp-field"><label>Description</label><input type="text" id="m_desc" placeholder="Short description"></div>
+    <div class="rp-field"><label>Default Font Family</label><input type="text" id="m_font" placeholder="e.g. Playfair Display"></div>
+    <div class="rp-field"><label>Theme</label>
+      <select id="m_theme">
+        <option value="dark">Dark (default)</option>
+        <option value="light">Light</option>
+        <option value="terminal">Terminal green</option>
+        <option value="amber">Amber retro</option>
+      </select>
+    </div>
   </div>
-  <div class="header-actions">
-    <button class="btn" onclick="showSnippetModal()">&#60;/&#62; Embed Code</button>
-    <button class="btn btn-purple" onclick="triggerOpen()">&#8679; Open .tbl</button>
-    <button class="btn btn-primary" onclick="saveTbl()">&#8595; Save .tbl</button>
+  <div style="margin-top:12px" class="rp-field"><label>Extra Google Fonts to preload (comma-separated)</label><input type="text" id="m_fonts" placeholder="Lora, Pacifico, Bebas Neue"></div>
+  <div class="modal-footer">
+    <button class="btn" onclick="closeOverlay('metaOverlay')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveMeta()">Save Settings</button>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════ SNIPPET MODAL ══════════════════════════════ -->
+<div class="overlay" id="snippetOverlay">
+<div class="modal">
+  <div class="modal-title">&lt;/&gt; Embed &amp; API Reference</div>
+  <h3>1 — Include library</h3>
+  <pre>&lt;script src="https://tbljs.netlify.app/tbl.js"&gt;&lt;/script&gt;</pre>
+  <h3>2 — Render from URL into a DIV</h3>
+  <pre>&lt;div id="my-table"&gt;&lt;/div&gt;
+&lt;script&gt;
+  TBL.loadUrl('https://yoursite.com/data.tbl',
+              document.getElementById('my-table'));
+&lt;/script&gt;</pre>
+  <h3>3 — Render from &lt;input type="file"&gt;</h3>
+  <pre>&lt;input type="file" accept=".tbl" id="f"&gt;
+&lt;div id="out"&gt;&lt;/div&gt;
+&lt;script&gt;
+  document.getElementById('f').onchange = function(){
+    TBL.loadFile(this.files[0], document.getElementById('out'));
+  };
+&lt;/script&gt;</pre>
+  <h3>4 — Parse binary manually</h3>
+  <pre>const buf = await fetch('data.tbl').then(r=&gt;r.arrayBuffer());
+const { columns, rows, meta } = TBL.parse(buf);
+// columns: [{name,type,props}, ...]
+// rows:    [[val,...], ...]
+// meta:    { title, description, fontFamily, ... }
+
+const objects = TBL.toObjects({ columns, rows });
+// [{col1: val1, col2: val2}, ...]</pre>
+  <h3>5 — Encode to binary</h3>
+  <pre>const buf = TBL.encode({
+  meta: { title: 'Products', fontFamily: 'Outfit' },
+  columns: [
+    { name: 'id',    type: TBL.TYPE.INT32     },
+    { name: 'name',  type: TBL.TYPE.STRING    },
+    { name: 'price', type: TBL.TYPE.FLOAT64   },
+    { name: 'photo', type: TBL.TYPE.IMAGE_URL },
+    { name: 'bg',    type: TBL.TYPE.COLOR     },
+    { name: 'font',  type: TBL.TYPE.FONT      },
+    { name: 'date',  type: TBL.TYPE.DATE      },
+    { name: 'live',  type: TBL.TYPE.BOOL      },
+  ],
+  rows: [
+    [1,'Laptop',999.99,'https://…/img.jpg','#1e40af','Syne','2024-03-01',true],
+  ]
+});</pre>
+  <h3>Column Types</h3>
+  <pre>TBL.TYPE.STRING    = 0   // UTF-8 text
+TBL.TYPE.INT32     = 1   // 32-bit integer (4 bytes)
+TBL.TYPE.FLOAT64   = 2   // 64-bit double  (8 bytes)
+TBL.TYPE.BOOL      = 3   // boolean        (1 byte)
+TBL.TYPE.IMAGE_URL = 4   // URL → rendered as &lt;img&gt;
+TBL.TYPE.COLOR     = 5   // CSS color → color swatch
+TBL.TYPE.DATE      = 6   // ISO date YYYY-MM-DD
+TBL.TYPE.FONT      = 7   // Google Font name → loads &amp; previews</pre>
+  <div class="modal-footer"><button class="btn btn-primary" onclick="closeOverlay('snippetOverlay')">Close</button></div>
+</div>
+</div>
+
+<!-- ════════════════════════════ MAIN APP ════════════════════════════════════ -->
+<div class="app" id="app">
+
+<!-- ── TOPBAR ── -->
+<header class="topbar">
+  <div class="logo">TBL<em>Studio</em><span class="logo-v">v2</span></div>
+  <div class="topbar-center">
+    <button class="btn btn-ghost btn-sm" onclick="newTable()">⬜ New</button>
+    <button class="btn btn-ghost btn-sm" onclick="triggerOpen()">⬆ Open</button>
+    <button class="btn btn-ghost btn-sm" onclick="showMeta()">⚙ Settings</button>
+    <button class="btn btn-ghost btn-sm" onclick="loadSample()">✦ Sample</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleHex()" id="hexBtn">◈ Hex</button>
+    <button class="btn btn-ghost btn-sm" onclick="showSnippet()">⌘ Embed</button>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-primary" onclick="saveTbl()">⬇ Save .tbl</button>
   </div>
 </header>
 
-<div class="workspace">
-
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar">
-
-    <!-- Column Manager -->
-    <div class="sidebar-section">
-      <div class="sidebar-title">Columns</div>
-      <div class="col-list" id="colList"></div>
-
-      <div class="add-col-form">
-        <input type="text" id="newColName" placeholder="column_name" maxlength="64" />
-        <select id="newColType">
-          <option value="0">STRING — text</option>
-          <option value="1">INT32 — integer</option>
-          <option value="2">FLOAT64 — decimal</option>
-          <option value="3">BOOL — true / false</option>
-        </select>
-        <button class="btn btn-success" onclick="addColumn()">+ Add Column</button>
-      </div>
+<!-- ── LEFT SIDEBAR ── -->
+<aside class="sidebar-left">
+  <!-- Column list -->
+  <div class="sb-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="sb-label">Columns</div>
+    <div class="col-list" id="colList"></div>
+    <div class="add-col-form" style="margin-top:6px">
+      <input type="text" id="newColName" placeholder="column_name" maxlength="64">
+      <select id="newColType">
+        <option value="0">STRING — text</option>
+        <option value="1">INT32 — integer</option>
+        <option value="2">FLOAT64 — decimal</option>
+        <option value="3">BOOL — toggle</option>
+        <option value="4">IMAGE_URL — image</option>
+        <option value="5">COLOR — color swatch</option>
+        <option value="6">DATE — date picker</option>
+        <option value="7">FONT — Google Font</option>
+      </select>
+      <button class="btn btn-green btn-sm" onclick="addColumn()">+ Add Column</button>
     </div>
-
-    <!-- Row Controls -->
-    <div class="sidebar-section">
-      <div class="sidebar-title">Rows</div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="btn" onclick="addRow()">+ Add Row</button>
-        <button class="btn btn-danger" onclick="deleteSelectedRows()">− Delete Selected</button>
-        <button class="btn" onclick="duplicateSelectedRows()">⎘ Duplicate Row</button>
-        <button class="btn" onclick="clearTable()">✕ Clear All Rows</button>
-      </div>
-    </div>
-
-    <!-- Table Settings -->
-    <div class="sidebar-section">
-      <div class="sidebar-title">Options</div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <button class="btn" id="hexToggle" onclick="toggleHex()">&#11001; Hex Preview</button>
-        <button class="btn btn-danger" onclick="newTable()">⬜ New Table</button>
-      </div>
-      <div style="margin-top:14px; font-size:10px; color: var(--muted); line-height:1.8;">
-        Binary format: <strong style="color:var(--accent)">TBL v1</strong><br>
-        Magic: <code style="color:var(--accent3)">54 42 4C</code><br>
-        Endian: Big-endian
-      </div>
-    </div>
-
-  </aside>
-
-  <!-- ── MAIN EDITOR ── -->
-  <main class="editor-area">
-
-    <!-- File info bar (shown after loading) -->
-    <div class="file-info" id="fileInfoBar"></div>
-
-    <!-- Toolbar -->
-    <div class="editor-toolbar">
-      <div class="toolbar-group">
-        <button class="btn btn-sm" onclick="selectAllRows()">Select All</button>
-        <button class="btn btn-sm" onclick="deselectAll()">Deselect</button>
-      </div>
-      <div class="toolbar-sep"></div>
-      <div class="toolbar-group">
-        <button class="btn btn-sm" onclick="sortByCol()">&#8645; Sort</button>
-        <select id="sortColSel" style="width:130px; padding:4px 8px; font-size:11px;"></select>
-      </div>
-      <div class="toolbar-sep"></div>
-      <div class="toolbar-group">
-        <input type="text" id="searchInput" placeholder="Search rows..." style="width:160px;padding:4px 10px;font-size:11px;" oninput="filterRows()" />
-        <button class="btn btn-sm btn-danger" onclick="clearSearch()">✕</button>
-      </div>
-      <div style="flex:1"></div>
-      <span id="selectionInfo" style="font-size:10px;color:var(--muted)"></span>
-    </div>
-
-    <!-- Table -->
-    <div class="table-wrap" id="tableWrap">
-      <div class="empty-state" id="emptyState">
-        <div class="empty-icon">⊞</div>
-        <div class="empty-title">NO COLUMNS DEFINED</div>
-        <div class="empty-sub">Add columns using the sidebar, then start entering data. Save as a real binary .tbl file.</div>
-      </div>
-      <table class="tbl-editor-table" id="editorTable" style="display:none;">
-        <thead id="editorThead"></thead>
-        <tbody id="editorTbody"></tbody>
-      </table>
-    </div>
-
-    <!-- Hex panel -->
-    <div class="hex-panel" id="hexPanel"></div>
-
-  </main>
-
-  <!-- Status bar -->
-  <footer class="statusbar">
-    <div class="status-item"><span class="status-dot" id="statusDot"></span> <span id="statusText">Ready</span></div>
-    <div class="status-item">Rows: <strong id="rowCountEl">0</strong></div>
-    <div class="status-item">Cols: <strong id="colCountEl">0</strong></div>
-    <div class="status-item">Est. size: <strong id="sizeEl">—</strong></div>
-    <div style="flex:1"></div>
-    <div style="font-size:10px;color:var(--border);">tbljs.netlify.app/tbl.js</div>
-  </footer>
-</div>
-
-<!-- ── SNIPPET MODAL ── -->
-<div class="modal-overlay" id="snippetModal">
-  <div class="modal">
-    <h2>&#60;/&#62; EMBED CODE SNIPPET</h2>
-    <p style="font-size:11px;color:var(--muted);margin-bottom:16px;">Add this to your HTML page to load and display <code>.tbl</code> files:</p>
-
-    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">1. Include the library:</p>
-    <pre id="snippetScript"></pre>
-
-    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">2. Display a .tbl file from a URL:</p>
-    <pre id="snippetUrl"></pre>
-
-    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">3. Load from a file input:</p>
-    <pre id="snippetFile"></pre>
-
-    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">4. Parse raw binary data yourself:</p>
-    <pre id="snippetParse"></pre>
-
-    <p style="font-size:11px;color:var(--accent3);margin-bottom:6px;">5. Encode data to binary .tbl:</p>
-    <pre id="snippetEncode"></pre>
-
-    <button class="btn close-btn" onclick="closeModal()">Close</button>
   </div>
+
+  <!-- Row controls -->
+  <div class="sb-section">
+    <div class="sb-label">Rows</div>
+    <div class="row-btns">
+      <button class="btn btn-sm" onclick="addRow()">+ Add Row</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteSelectedRows()">− Delete Selected</button>
+      <button class="btn btn-sm" onclick="duplicateSelectedRows()">⎘ Duplicate</button>
+      <button class="btn btn-sm btn-danger" onclick="clearRows()">✕ Clear All</button>
+    </div>
+  </div>
+
+  <!-- Sort/select -->
+  <div class="sb-section">
+    <div class="sb-label">Sort</div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select id="sortSel" style="flex:1"></select>
+      <button class="btn btn-sm btn-icon" onclick="sortAsc()" title="Sort ascending">↑</button>
+      <button class="btn btn-sm btn-icon" onclick="sortDesc()" title="Sort descending">↓</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN EDITOR ── -->
+<main class="main">
+  <!-- toolbar -->
+  <div class="toolbar">
+    <button class="btn btn-sm" onclick="selectAll()">☑ All</button>
+    <button class="btn btn-sm" onclick="deselectAll()">☐ None</button>
+    <div class="toolbar-sep"></div>
+    <div class="search-wrap">
+      <input type="text" id="searchIn" placeholder="Search…" oninput="filterRows()">
+      <button class="btn" onclick="clearSearch()">✕</button>
+    </div>
+    <div style="flex:1"></div>
+    <span id="selInfo" style="font-size:10px;color:var(--text3)"></span>
+  </div>
+
+  <!-- table viewport -->
+  <div class="table-viewport" id="tableVp">
+    <div class="empty" id="emptyState">
+      <div class="empty-ico">⊞</div>
+      <div class="empty-head">EMPTY TABLE</div>
+      <div class="empty-sub">Add columns in the sidebar, then fill in your data. Save as a true binary .tbl file.</div>
+    </div>
+    <table class="tbl-editor" id="editorTable" style="display:none">
+      <thead id="edThead"></thead>
+      <tbody id="edTbody"></tbody>
+    </table>
+  </div>
+
+  <!-- hex strip -->
+  <div class="hex-strip" id="hexStrip"></div>
+</main>
+
+<!-- ── RIGHT PANEL (Column Properties) ── -->
+<aside class="sidebar-right" id="rightPanel">
+  <div class="rp-header">
+    <span class="rp-title" id="rpTitle">Column Properties</span>
+    <button class="btn btn-ghost btn-xs" onclick="closeProps()">✕</button>
+  </div>
+  <div class="rp-body" id="rpBody">
+    <p style="font-size:11px;color:var(--text3)">Click a column header to edit its properties.</p>
+  </div>
+</aside>
+
+</div><!-- end .app -->
+
+<!-- status bar -->
+<div class="statusbar">
+  <div class="st-item"><span class="st-dot"></span><span id="stText">Ready</span></div>
+  <div class="st-item">Rows <span class="st-val" id="stRows">0</span></div>
+  <div class="st-item">Cols <span class="st-val" id="stCols">0</span></div>
+  <div class="st-item">Size <span class="st-val" id="stSize">—</span></div>
+  <div class="st-item">File <span class="st-val" id="stFile">untitled</span></div>
+  <div style="flex:1"></div>
+  <span style="color:var(--border2)">tbljs.netlify.app/tbl.js · TBL v2 · Big-endian</span>
 </div>
 
-<!-- Hidden file input -->
-<input type="file" id="fileInput" accept=".tbl" style="display:none;" onchange="loadTblFile(event)" />
+<input type="file" id="fileIn" accept=".tbl" style="display:none" onchange="openFile(event)">
 
+<!-- ════════════════════════════════════════════════════════════════════════
+  TBL v2 FULL BINARY FORMAT
+  Magic: 54 42 4C + version(1B) + metaLen(4B) + meta(JSON) +
+  colCount(2B) + rowCount(4B) +
+  [type(1B) + nameLen(1B) + name + propLen(2B) + props(JSON)] * N +
+  row data packed per type:
+    STRING/IMAGE_URL/COLOR/DATE/FONT → uint32 len + UTF-8 bytes
+    INT32   → int32 BE
+    FLOAT64 → float64 BE
+    BOOL    → uint8
+════════════════════════════════════════════════════════════════════════ -->
 <script>
-// ════════════════════════════════════════════════════════════════════════════
-//  TBL FORMAT CONSTANTS
-// ════════════════════════════════════════════════════════════════════════════
-const TYPE = { STRING: 0, INT32: 1, FLOAT64: 2, BOOL: 3 };
-const TYPE_NAME = ['STRING', 'INT32', 'FLOAT64', 'BOOL'];
-const MAGIC = [0x54, 0x42, 0x4C];
-const VERSION = 1;
+// ─── COLUMN TYPES ────────────────────────────────────────────────────────────
+const TYPE      = { STRING:0, INT32:1, FLOAT64:2, BOOL:3, IMAGE_URL:4, COLOR:5, DATE:6, FONT:7 };
+const TYPE_NAME = ['STRING','INT32','FLOAT64','BOOL','IMAGE_URL','COLOR','DATE','FONT'];
+const STR_TYPES = new Set([0,4,5,6,7]);
+const MAGIC = [0x54,0x42,0x4C];
+const VERSION = 2;
 
-// ════════════════════════════════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════════════════════════════════
-let columns  = [];   // [{ name, type }]
-let rows     = [];   // [[val, val, ...], ...]
-let selectedRows = new Set();
-let hexVisible = false;
-let currentFile = null;
-let filterTerm = '';
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let columns  = [];  // [{name, type, props:{width,align,hidden,...}}]
+let rows     = [];  // [[v,...],...]
+let meta     = {};  // {title, description, fontFamily, customFonts, theme}
+let selected = new Set();
+let filter   = '';
+let activeCol = -1;
+let hexOpen  = false;
+let currentFile = 'untitled';
 
-// ════════════════════════════════════════════════════════════════════════════
-//  BINARY ENCODER
-// ════════════════════════════════════════════════════════════════════════════
-function encode() {
-  const enc = new TextEncoder();
-  const colNameBytes = columns.map(c => enc.encode(c.name));
+const _loadedFonts = new Set();
 
-  let size = 3 + 1 + 2 + 4;
-  for (let i = 0; i < columns.length; i++) size += 1 + 1 + colNameBytes[i].length;
+// ─── FONT LOADER ─────────────────────────────────────────────────────────────
+function loadFont(name){
+  if(!name||_loadedFonts.has(name))return;
+  _loadedFonts.add(name);
+  const l=document.createElement('link');
+  l.rel='stylesheet';
+  l.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}&display=swap`;
+  document.head.appendChild(l);
+}
 
-  const strCells = [];
-  for (let r = 0; r < rows.length; r++) {
-    strCells.push([]);
-    for (let c = 0; c < columns.length; c++) {
-      const t = columns[c].type, v = rows[r][c];
-      if (t === TYPE.STRING) {
-        const b = enc.encode(v == null ? '' : String(v));
-        strCells[r].push(b); size += 2 + b.length;
-      } else if (t === TYPE.INT32)   { strCells[r].push(null); size += 4; }
-        else if (t === TYPE.FLOAT64) { strCells[r].push(null); size += 8; }
-        else if (t === TYPE.BOOL)    { strCells[r].push(null); size += 1; }
+// ─── BINARY ENCODER ──────────────────────────────────────────────────────────
+function encode(){
+  const enc=new TextEncoder();
+  const colNameB=columns.map(c=>enc.encode(c.name));
+  const colPropB=columns.map(c=>enc.encode(JSON.stringify(c.props||{})));
+  const metaB=enc.encode(JSON.stringify(meta||{}));
+
+  // flush DOM inputs into rows first
+  document.querySelectorAll('.cell-in[data-ri][data-ci]').forEach(el=>{
+    const ri=+el.dataset.ri, ci=+el.dataset.ci;
+    if(rows[ri]!==undefined){
+      const t=columns[ci]?.type;
+      if(t===TYPE.INT32) rows[ri][ci]=parseInt(el.value,10)||0;
+      else if(t===TYPE.FLOAT64) rows[ri][ci]=parseFloat(el.value)||0;
+      else if(t!==TYPE.BOOL) rows[ri][ci]=el.value;
+    }
+  });
+
+  let size=3+1+4+metaB.length+2+4;
+  for(let i=0;i<columns.length;i++) size+=1+1+colNameB[i].length+2+colPropB[i].length;
+  const cellB=[];
+  for(let r=0;r<rows.length;r++){
+    cellB.push([]);
+    for(let c=0;c<columns.length;c++){
+      const t=columns[c].type, v=rows[r][c];
+      if(STR_TYPES.has(t)){const b=enc.encode(v==null?'':String(v));cellB[r].push(b);size+=4+b.length;}
+      else if(t===TYPE.INT32){cellB[r].push(null);size+=4;}
+      else if(t===TYPE.FLOAT64){cellB[r].push(null);size+=8;}
+      else if(t===TYPE.BOOL){cellB[r].push(null);size+=1;}
     }
   }
-
-  const buf = new ArrayBuffer(size);
-  const view = new DataView(buf);
-  const bytes = new Uint8Array(buf);
-  let o = 0;
-
-  bytes[o++] = MAGIC[0]; bytes[o++] = MAGIC[1]; bytes[o++] = MAGIC[2];
-  bytes[o++] = VERSION;
-  view.setUint16(o, columns.length, false); o += 2;
-  view.setUint32(o, rows.length, false); o += 4;
-
-  for (let i = 0; i < columns.length; i++) {
-    bytes[o++] = columns[i].type;
-    bytes[o++] = colNameBytes[i].length;
-    bytes.set(colNameBytes[i], o); o += colNameBytes[i].length;
+  const buf=new ArrayBuffer(size);
+  const dv=new DataView(buf);
+  const b=new Uint8Array(buf);
+  let o=0;
+  b[o++]=MAGIC[0];b[o++]=MAGIC[1];b[o++]=MAGIC[2];b[o++]=VERSION;
+  dv.setUint32(o,metaB.length,false);o+=4;
+  b.set(metaB,o);o+=metaB.length;
+  dv.setUint16(o,columns.length,false);o+=2;
+  dv.setUint32(o,rows.length,false);o+=4;
+  for(let i=0;i<columns.length;i++){
+    b[o++]=columns[i].type;
+    b[o++]=colNameB[i].length;
+    b.set(colNameB[i],o);o+=colNameB[i].length;
+    dv.setUint16(o,colPropB[i].length,false);o+=2;
+    b.set(colPropB[i],o);o+=colPropB[i].length;
   }
-
-  for (let r = 0; r < rows.length; r++) {
-    for (let c = 0; c < columns.length; c++) {
-      const t = columns[c].type, v = rows[r][c];
-      if (t === TYPE.STRING) {
-        const b = strCells[r][c];
-        view.setUint16(o, b.length, false); o += 2;
-        bytes.set(b, o); o += b.length;
-      } else if (t === TYPE.INT32) {
-        view.setInt32(o, v == null ? 0 : (parseInt(v,10)||0), false); o += 4;
-      } else if (t === TYPE.FLOAT64) {
-        view.setFloat64(o, v == null ? 0 : (parseFloat(v)||0), false); o += 8;
-      } else if (t === TYPE.BOOL) {
-        bytes[o++] = v ? 1 : 0;
-      }
+  for(let r=0;r<rows.length;r++){
+    for(let c=0;c<columns.length;c++){
+      const t=columns[c].type, v=rows[r][c];
+      if(STR_TYPES.has(t)){const sb=cellB[r][c];dv.setUint32(o,sb.length,false);o+=4;b.set(sb,o);o+=sb.length;}
+      else if(t===TYPE.INT32){dv.setInt32(o,v==null?0:(parseInt(v,10)||0),false);o+=4;}
+      else if(t===TYPE.FLOAT64){dv.setFloat64(o,v==null?0:(parseFloat(v)||0),false);o+=8;}
+      else if(t===TYPE.BOOL){b[o++]=v?1:0;}
     }
   }
   return buf;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  BINARY DECODER
-// ════════════════════════════════════════════════════════════════════════════
-function decode(arrayBuffer) {
-  const view = new DataView(arrayBuffer);
-  const bytes = new Uint8Array(arrayBuffer);
-  const dec = new TextDecoder();
-  let o = 0;
-
-  if (bytes[0] !== MAGIC[0] || bytes[1] !== MAGIC[1] || bytes[2] !== MAGIC[2])
-    throw new Error('Not a TBL file (bad magic bytes: expected 54 42 4C)');
-
-  o = 3;
-  const version = bytes[o++];
-  if (version !== VERSION) throw new Error(`Unsupported TBL version: ${version}`);
-
-  const colCount = view.getUint16(o, false); o += 2;
-  const rowCount = view.getUint32(o, false); o += 4;
-
-  const cols = [];
-  for (let i = 0; i < colCount; i++) {
-    const type = bytes[o++];
-    const nameLen = bytes[o++];
-    const name = dec.decode(bytes.slice(o, o + nameLen)); o += nameLen;
-    cols.push({ name, type });
+// ─── BINARY DECODER ──────────────────────────────────────────────────────────
+function decode(ab){
+  const dv=new DataView(ab);const b=new Uint8Array(ab);const dec=new TextDecoder();let o=0;
+  if(b[0]!==MAGIC[0]||b[1]!==MAGIC[1]||b[2]!==MAGIC[2]) throw new Error('Not a TBL file — invalid magic bytes');
+  o=3;
+  const ver=b[o++];
+  if(ver>VERSION) throw new Error(`TBL v${ver} exceeds library max (v${VERSION})`);
+  let mt={};
+  if(ver>=2){const ml=dv.getUint32(o,false);o+=4;try{mt=JSON.parse(dec.decode(b.slice(o,o+ml)));}catch(_){}o+=ml;}
+  const cc=dv.getUint16(o,false);o+=2;
+  const rc=dv.getUint32(o,false);o+=4;
+  const cols=[];
+  for(let i=0;i<cc;i++){
+    const type=b[o++];const nl=b[o++];
+    const name=dec.decode(b.slice(o,o+nl));o+=nl;
+    let props={};
+    if(ver>=2){const pl=dv.getUint16(o,false);o+=2;try{props=JSON.parse(dec.decode(b.slice(o,o+pl)));}catch(_){}o+=pl;}
+    cols.push({name,type,props});
   }
-
-  const rowData = [];
-  for (let r = 0; r < rowCount; r++) {
-    const row = [];
-    for (let c = 0; c < colCount; c++) {
-      const t = cols[c].type;
-      if (t === TYPE.STRING) {
-        const len = view.getUint16(o, false); o += 2;
-        row.push(dec.decode(bytes.slice(o, o + len))); o += len;
-      } else if (t === TYPE.INT32)   { row.push(view.getInt32(o, false));   o += 4; }
-        else if (t === TYPE.FLOAT64) { row.push(view.getFloat64(o, false)); o += 8; }
-        else if (t === TYPE.BOOL)    { row.push(bytes[o++] !== 0); }
+  const rowData=[];
+  for(let r=0;r<rc;r++){
+    const row=[];
+    for(let c=0;c<cc;c++){
+      const t=cols[c].type;
+      if(STR_TYPES.has(t)){const len=ver>=2?dv.getUint32(o,false):dv.getUint16(o,false);o+=ver>=2?4:2;row.push(dec.decode(b.slice(o,o+len)));o+=len;}
+      else if(t===TYPE.INT32){row.push(dv.getInt32(o,false));o+=4;}
+      else if(t===TYPE.FLOAT64){row.push(dv.getFloat64(o,false));o+=8;}
+      else if(t===TYPE.BOOL){row.push(b[o++]!==0);}
     }
     rowData.push(row);
   }
-  return { columns: cols, rows: rowData };
+  return{columns:cols,rows:rowData,meta:mt};
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  RENDER
-// ════════════════════════════════════════════════════════════════════════════
-function render() {
-  const thead = document.getElementById('editorThead');
-  const tbody = document.getElementById('editorTbody');
-  const empty = document.getElementById('emptyState');
-  const table = document.getElementById('editorTable');
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render(){
+  const thead=document.getElementById('edThead');
+  const tbody=document.getElementById('edTbody');
+  const empty=document.getElementById('emptyState');
+  const table=document.getElementById('editorTable');
 
-  if (columns.length === 0) {
-    empty.style.display = 'flex'; table.style.display = 'none';
-  } else {
-    empty.style.display = 'none'; table.style.display = '';
-  }
+  if(columns.length===0){empty.style.display='flex';table.style.display='none';}
+  else{empty.style.display='none';table.style.display='';}
 
-  // Thead
-  let hHtml = '<tr><th>#</th>';
-  columns.forEach((col, ci) => {
-    hHtml += `<th>
-      <div class="th-inner">
-        <span>${esc(col.name)}</span>
-        <span class="th-type">${TYPE_NAME[col.type]}</span>
+  // thead
+  let h='<tr><th class="row-num-th">#</th>';
+  columns.forEach((col,ci)=>{
+    const active=ci===activeCol;
+    h+=`<th class="${active?'col-active':''}" data-ci="${ci}">
+      <div class="th-inner" onclick="openProps(${ci})">
+        <span class="th-name">${esc(col.name)}</span>
+        <span class="type-chip tc-${col.type}">${TYPE_NAME[col.type].slice(0,3)}</span>
+      </div>
+      <div class="th-actions">
+        <button class="btn btn-xs btn-icon" title="Sort ↑" onclick="event.stopPropagation();sortByCI(${ci},1)">↑</button>
+        <button class="btn btn-xs btn-icon" title="Sort ↓" onclick="event.stopPropagation();sortByCI(${ci},-1)">↓</button>
+        <button class="btn btn-xs btn-danger btn-icon" title="Remove" onclick="event.stopPropagation();removeCol(${ci})">✕</button>
       </div>
     </th>`;
   });
-  hHtml += '</tr>';
-  thead.innerHTML = hHtml;
+  h+='</tr>';
+  thead.innerHTML=h;
 
-  // Tbody
-  const term = filterTerm.toLowerCase();
-  let visibleCount = 0;
+  // tbody
+  const term=filter.toLowerCase();
+  let vis=0;
+  tbody.innerHTML='';
+  rows.forEach((row,ri)=>{
+    if(term&&!row.some(v=>String(v).toLowerCase().includes(term)))return;
+    vis++;
+    const tr=document.createElement('tr');
+    if(selected.has(ri))tr.classList.add('row-sel');
+    tr.dataset.ri=ri;
+    tr.addEventListener('click',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;toggleSel(ri);});
 
-  tbody.innerHTML = '';
-  rows.forEach((row, ri) => {
-    // Filter
-    if (term && !row.some(v => String(v).toLowerCase().includes(term))) return;
-    visibleCount++;
+    let html=`<td class="row-num-td">${ri+1}</td>`;
+    columns.forEach((col,ci)=>{
+      html+=`<td data-ci="${ci}">${makeCellHTML(row[ci],ri,ci,col)}</td>`;
+    });
+    tr.innerHTML=html;
+    tbody.appendChild(tr);
 
-    const tr = document.createElement('tr');
-    tr.dataset.ri = ri;
-    if (selectedRows.has(ri)) tr.classList.add('row-selected');
-
-    let rowHtml = `<td>${ri + 1}</td>`;
-    columns.forEach((col, ci) => {
-      const val = row[ci];
-      if (col.type === TYPE.BOOL) {
-        rowHtml += `<td><input class="cell-input type-bool ${val ? 'val-true' : 'val-false'}"
-          data-ri="${ri}" data-ci="${ci}" data-type="bool"
-          value="${val ? 'true' : 'false'}" readonly
-          onclick="toggleBool(${ri},${ci})" /></td>`;
-      } else {
-        rowHtml += `<td><input class="cell-input"
-          data-ri="${ri}" data-ci="${ci}" data-type="${col.type}"
-          value="${esc(val == null ? '' : String(val))}"
-          oninput="onCellInput(this,${ri},${ci})"
-          onfocus="selectCell(this)" /></td>`;
+    // Post-process font cells
+    columns.forEach((col,ci)=>{
+      if(col.type===TYPE.FONT&&row[ci]){
+        loadFont(row[ci]);
+        const el=tr.querySelector(`td[data-ci="${ci}"] .cell-font-preview`);
+        if(el)el.style.fontFamily=`'${row[ci]}',sans-serif`;
       }
     });
-
-    tr.innerHTML = rowHtml;
-    tr.addEventListener('click', (e) => {
-      if (e.target.tagName === 'INPUT') return;
-      toggleRowSelect(ri);
-    });
-    tbody.appendChild(tr);
   });
 
-  updateStatus(visibleCount);
+  updateStatus(vis);
   renderColList();
-  updateSortSelect();
-  if (hexVisible) renderHex();
+  renderSortSel();
+  if(hexOpen)renderHex();
+  applyMeta();
 }
 
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function makeCellHTML(val,ri,ci,col){
+  const t=col.type;
+  const v=val==null?'':val;
 
-function renderColList() {
-  const list = document.getElementById('colList');
-  if (columns.length === 0) {
-    list.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px;">No columns yet</div>';
-    return;
+  if(t===TYPE.BOOL){
+    const on=!!val;
+    return`<div class="cell-bool ${on?'t':'f'}" data-ri="${ri}" data-ci="${ci}" onclick="toggleBool(${ri},${ci})">${on?'✓':'○'}</div>`;
   }
-  list.innerHTML = columns.map((col, ci) => `
-    <div class="col-item" draggable="true">
-      <span class="col-name">${esc(col.name)}</span>
-      <span class="col-type-badge type-${col.type}">${TYPE_NAME[col.type].slice(0,3)}</span>
-      <button class="btn btn-xs btn-danger" onclick="removeColumn(${ci})">✕</button>
-    </div>
-  `).join('');
-}
-
-function updateStatus(visible) {
-  document.getElementById('rowCountEl').textContent = filterTerm ? `${visible}/${rows.length}` : rows.length;
-  document.getElementById('colCountEl').textContent = columns.length;
-
-  const buf = columns.length > 0 ? encode() : null;
-  document.getElementById('sizeEl').textContent = buf ? formatBytes(buf.byteLength) : '—';
-  document.getElementById('statusText').textContent = 'Ready';
-}
-
-function formatBytes(n) {
-  if (n < 1024) return n + ' B';
-  if (n < 1048576) return (n/1024).toFixed(1) + ' KB';
-  return (n/1048576).toFixed(2) + ' MB';
-}
-
-function updateSortSelect() {
-  const sel = document.getElementById('sortColSel');
-  sel.innerHTML = columns.map((col, i) => `<option value="${i}">${col.name}</option>`).join('');
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  CELL / ROW ACTIONS
-// ════════════════════════════════════════════════════════════════════════════
-function onCellInput(input, ri, ci) {
-  rows[ri][ci] = input.value;
-  if (hexVisible) renderHex();
-  updateStatus(rows.length);
-}
-
-function selectCell(input) {
-  document.querySelectorAll('.td-selected').forEach(el => el.classList.remove('td-selected'));
-  input.parentElement.classList.add('td-selected');
-}
-
-function toggleBool(ri, ci) {
-  rows[ri][ci] = !rows[ri][ci];
-  render();
-}
-
-function toggleRowSelect(ri) {
-  if (selectedRows.has(ri)) selectedRows.delete(ri);
-  else selectedRows.add(ri);
-  const rows_el = document.querySelectorAll(`tr[data-ri="${ri}"]`);
-  rows_el.forEach(tr => tr.classList.toggle('row-selected', selectedRows.has(ri)));
-  document.getElementById('selectionInfo').textContent =
-    selectedRows.size ? `${selectedRows.size} row(s) selected` : '';
-}
-
-function selectAllRows() {
-  rows.forEach((_, i) => selectedRows.add(i));
-  document.getElementById('selectionInfo').textContent = `${selectedRows.size} row(s) selected`;
-  render();
-}
-
-function deselectAll() {
-  selectedRows.clear();
-  document.getElementById('selectionInfo').textContent = '';
-  render();
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  COLUMN ACTIONS
-// ════════════════════════════════════════════════════════════════════════════
-function addColumn() {
-  const nameInput = document.getElementById('newColName');
-  const typeInput = document.getElementById('newColType');
-  const name = nameInput.value.trim().replace(/\s+/g, '_');
-  if (!name) { toast('Column name required', 'error'); return; }
-  if (columns.find(c => c.name === name)) { toast('Column name must be unique', 'error'); return; }
-
-  const type = parseInt(typeInput.value);
-  columns.push({ name, type });
-
-  // Add default cell to all rows
-  let def;
-  if (type === TYPE.BOOL) def = false;
-  else if (type === TYPE.INT32) def = 0;
-  else if (type === TYPE.FLOAT64) def = 0.0;
-  else def = '';
-  rows.forEach(row => row.push(def));
-
-  nameInput.value = '';
-  render();
-  toast(`Column "${name}" added`, 'success');
-}
-
-function removeColumn(ci) {
-  const name = columns[ci].name;
-  columns.splice(ci, 1);
-  rows.forEach(row => row.splice(ci, 1));
-  render();
-  toast(`Column "${name}" removed`, 'info');
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  ROW ACTIONS
-// ════════════════════════════════════════════════════════════════════════════
-function addRow() {
-  if (columns.length === 0) { toast('Add at least one column first', 'error'); return; }
-  const row = columns.map(col => {
-    if (col.type === TYPE.BOOL) return false;
-    if (col.type === TYPE.INT32 || col.type === TYPE.FLOAT64) return 0;
-    return '';
-  });
-  rows.push(row);
-  render();
-  // Scroll to bottom
-  const wrap = document.getElementById('tableWrap');
-  wrap.scrollTop = wrap.scrollHeight;
-}
-
-function deleteSelectedRows() {
-  if (selectedRows.size === 0) { toast('No rows selected', 'error'); return; }
-  rows = rows.filter((_, i) => !selectedRows.has(i));
-  selectedRows.clear();
-  render();
-  toast('Rows deleted', 'info');
-}
-
-function duplicateSelectedRows() {
-  if (selectedRows.size === 0) { toast('No rows selected', 'error'); return; }
-  const toAdd = [...selectedRows].sort().map(i => [...rows[i]]);
-  rows.push(...toAdd);
-  selectedRows.clear();
-  render();
-  toast(`Duplicated ${toAdd.length} row(s)`, 'success');
-}
-
-function clearTable() {
-  if (rows.length === 0) return;
-  if (!confirm(`Clear all ${rows.length} rows? This cannot be undone.`)) return;
-  rows = [];
-  selectedRows.clear();
-  render();
-  toast('All rows cleared', 'info');
-}
-
-function newTable() {
-  if (!confirm('Start a new empty table? All unsaved data will be lost.')) return;
-  columns = []; rows = []; selectedRows.clear();
-  currentFile = null;
-  document.getElementById('fileInfoBar').classList.remove('visible');
-  render();
-  toast('New table created', 'info');
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  SORT / FILTER
-// ════════════════════════════════════════════════════════════════════════════
-function sortByCol() {
-  const ci = parseInt(document.getElementById('sortColSel').value);
-  if (isNaN(ci)) return;
-  rows.sort((a, b) => {
-    const va = a[ci], vb = b[ci];
-    if (typeof va === 'boolean') return va === vb ? 0 : va ? -1 : 1;
-    if (typeof va === 'number') return va - vb;
-    return String(va).localeCompare(String(vb));
-  });
-  render();
-  toast(`Sorted by "${columns[ci].name}"`, 'info');
-}
-
-function filterRows() {
-  filterTerm = document.getElementById('searchInput').value;
-  render();
-}
-
-function clearSearch() {
-  document.getElementById('searchInput').value = '';
-  filterTerm = '';
-  render();
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  HEX VIEWER
-// ════════════════════════════════════════════════════════════════════════════
-function toggleHex() {
-  hexVisible = !hexVisible;
-  const panel = document.getElementById('hexPanel');
-  panel.classList.toggle('visible', hexVisible);
-  document.getElementById('hexToggle').textContent = hexVisible ? '⊟ Hide Hex' : '⊞ Hex Preview';
-  if (hexVisible) renderHex();
-}
-
-function renderHex() {
-  if (columns.length === 0) { document.getElementById('hexPanel').innerHTML = '<span style="color:var(--muted)">No data to preview.</span>'; return; }
-  const buf = encode();
-  const bytes = new Uint8Array(buf);
-  const panel = document.getElementById('hexPanel');
-  const maxBytes = 256;
-  let html = '';
-
-  for (let i = 0; i < Math.min(bytes.length, maxBytes); i += 16) {
-    const chunk = bytes.slice(i, i + 16);
-    const addr = i.toString(16).padStart(8, '0').toUpperCase();
-    let hexStr = '', ascii = '';
-
-    chunk.forEach((b, idx) => {
-      const hex = b.toString(16).padStart(2, '0').toUpperCase();
-      const isHeader = i + idx < 10; // magic + version area
-      const cls = (i + idx) < 3 ? 'hex-byte-magic' : (i + idx) < 10 ? 'hex-byte-accent' : '';
-      hexStr += `<span class="${cls}">${hex}</span> `;
-      ascii += (b >= 32 && b < 127) ? String.fromCharCode(b) : '·';
-    });
-
-    html += `<div class="hex-row">
-      <span class="hex-addr">${addr}</span>
-      <span class="hex-bytes">${hexStr}</span>
-      <span class="hex-ascii">${ascii}</span>
+  if(t===TYPE.IMAGE_URL){
+    const url=String(v);
+    return`<div class="cell-img-wrap">
+      ${url?`<img class="cell-img-thumb" src="${esc(url)}" onerror="this.classList.add('err')">`:
+        `<div style="width:48px;height:34px;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:9px">IMG</div>`}
+      <input class="cell-in" data-ri="${ri}" data-ci="${ci}" placeholder="https://…" value="${esc(url)}"
+        oninput="onCellInput(this,${ri},${ci})" onfocus="focusCell(this)"
+        style="font-size:10px;color:var(--pink)">
     </div>`;
   }
-
-  if (bytes.length > maxBytes) {
-    html += `<div style="color:var(--muted);padding:4px 0;">… ${bytes.length - maxBytes} more bytes (${formatBytes(bytes.length)} total)</div>`;
+  if(t===TYPE.COLOR){
+    const cv=String(v)||'#3b82f6';
+    return`<div class="cell-color-wrap">
+      <input type="color" class="color-swatch" value="${isValidColor(cv)?cv:'#3b82f6'}"
+        oninput="onColorChange(this,${ri},${ci})">
+      <input class="cell-in" data-ri="${ri}" data-ci="${ci}" placeholder="#rrggbb or css"
+        value="${esc(String(v))}"
+        oninput="onCellInput(this,${ri},${ci});syncColorSwatch(this)"
+        onfocus="focusCell(this)" style="font-size:11px">
+    </div>`;
   }
-
-  panel.innerHTML = html;
+  if(t===TYPE.DATE){
+    return`<input type="date" class="cell-in cell-date" data-ri="${ri}" data-ci="${ci}"
+      value="${esc(String(v))}" oninput="onCellInput(this,${ri},${ci})" onfocus="focusCell(this)">`;
+  }
+  if(t===TYPE.FONT){
+    const fv=String(v);
+    return`<div class="cell-font-wrap">
+      <div class="cell-font-preview">${fv||'—'}</div>
+      <input class="cell-in" data-ri="${ri}" data-ci="${ci}" placeholder="e.g. Pacifico"
+        value="${esc(fv)}" oninput="onFontInput(this,${ri},${ci})" onfocus="focusCell(this)"
+        style="font-size:10px;color:var(--accent2);padding:2px 0 0">
+    </div>`;
+  }
+  // STRING / INT32 / FLOAT64
+  const isNum=t===TYPE.INT32||t===TYPE.FLOAT64;
+  return`<input class="cell-in" data-ri="${ri}" data-ci="${ci}"
+    placeholder="${t===TYPE.INT32?'0':t===TYPE.FLOAT64?'0.0':''}"
+    value="${esc(String(v))}"
+    oninput="onCellInput(this,${ri},${ci})" onfocus="focusCell(this)"
+    style="${isNum?'text-align:right;color:var(--accent3)':''}">`;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  SAVE / LOAD
-// ════════════════════════════════════════════════════════════════════════════
-function saveTbl() {
-  if (columns.length === 0) { toast('Add columns before saving', 'error'); return; }
-
-  // Flush all input values first
-  document.querySelectorAll('.cell-input').forEach(input => {
-    const ri = parseInt(input.dataset.ri);
-    const ci = parseInt(input.dataset.ci);
-    if (!isNaN(ri) && !isNaN(ci)) {
-      const t = columns[ci].type;
-      if (t === TYPE.INT32) rows[ri][ci] = parseInt(input.value,10)||0;
-      else if (t === TYPE.FLOAT64) rows[ri][ci] = parseFloat(input.value)||0;
-      else if (t !== TYPE.BOOL) rows[ri][ci] = input.value;
-    }
-  });
-
-  const buf = encode();
-  const blob = new Blob([buf], { type: 'application/octet-stream' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = (currentFile || 'table') + '.tbl';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast(`Saved ${formatBytes(buf.byteLength)} binary .tbl file`, 'success');
+function focusCell(el){
+  document.querySelectorAll('.cell-focused').forEach(e=>e.classList.remove('cell-focused'));
+  el.closest('td')?.classList.add('cell-focused');
 }
 
-function triggerOpen() {
-  document.getElementById('fileInput').click();
+function onCellInput(el,ri,ci){
+  rows[ri][ci]=el.value;
+  if(hexOpen)renderHex();
+  updateStatus();
+}
+function onFontInput(el,ri,ci){
+  rows[ri][ci]=el.value;
+  loadFont(el.value);
+  const prev=el.closest('.cell-font-wrap')?.querySelector('.cell-font-preview');
+  if(prev){prev.textContent=el.value||'—';prev.style.fontFamily=el.value?`'${el.value}',sans-serif`:'';}
+  if(hexOpen)renderHex();
+}
+function onColorChange(picker,ri,ci){
+  rows[ri][ci]=picker.value;
+  const txt=picker.nextElementSibling;
+  if(txt)txt.value=picker.value;
+  if(hexOpen)renderHex();
+}
+function syncColorSwatch(txtInput){
+  const sw=txtInput.previousElementSibling;
+  if(sw&&sw.type==='color'&&isValidColor(txtInput.value))sw.value=txtInput.value;
+}
+function isValidColor(c){try{const s=new Option().style;s.color=c;return s.color!=='';}catch{return false;}}
+function toggleBool(ri,ci){rows[ri][ci]=!rows[ri][ci];render();}
+
+// ─── COL LIST SIDEBAR ─────────────────────────────────────────────────────────
+function renderColList(){
+  const el=document.getElementById('colList');
+  if(columns.length===0){el.innerHTML='<div style="font-size:10px;color:var(--text3);text-align:center;padding:8px">No columns</div>';return;}
+  el.innerHTML=columns.map((col,ci)=>`
+    <div class="col-item ${ci===activeCol?'active':''}" onclick="openProps(${ci})">
+      <span class="col-name-text">${esc(col.name)}</span>
+      <span class="type-chip tc-${col.type}">${TYPE_NAME[col.type].slice(0,3)}</span>
+    </div>`).join('');
 }
 
-function loadTblFile(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const result = decode(e.target.result);
-      columns = result.columns;
-      rows = result.rows;
-      selectedRows.clear();
-      currentFile = file.name.replace(/\.tbl$/i, '');
-
-      const bar = document.getElementById('fileInfoBar');
-      bar.classList.add('visible');
-      bar.innerHTML = `
-        <div class="file-info-item">File: <strong>${file.name}</strong></div>
-        <div class="file-info-item">Size: <strong>${formatBytes(file.size)}</strong></div>
-        <div class="file-info-item">Columns: <strong>${columns.length}</strong></div>
-        <div class="file-info-item">Rows: <strong>${rows.length}</strong></div>
-        <div class="file-info-item">Version: <strong>TBL v${VERSION}</strong></div>
-      `;
-
-      render();
-      toast(`Loaded "${file.name}" — ${rows.length} rows, ${columns.length} cols`, 'success');
-    } catch (err) {
-      toast('Error: ' + err.message, 'error');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-  event.target.value = '';
+function renderSortSel(){
+  const sel=document.getElementById('sortSel');
+  sel.innerHTML=columns.map((c,i)=>`<option value="${i}">${c.name}</option>`).join('');
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-//  SNIPPET MODAL
-// ════════════════════════════════════════════════════════════════════════════
-function showSnippetModal() {
-  document.getElementById('snippetScript').textContent =
-`<!-- Include the TBL library -->
-<script src="https://tbljs.netlify.app/tbl.js"><\/script>`;
+// ─── STATUS ───────────────────────────────────────────────────────────────────
+function updateStatus(vis){
+  const vr=vis!=null?vis:rows.length;
+  document.getElementById('stRows').textContent=filter?`${vr}/${rows.length}`:rows.length;
+  document.getElementById('stCols').textContent=columns.length;
+  const buf=columns.length?encode():null;
+  document.getElementById('stSize').textContent=buf?fmtBytes(buf.byteLength):'—';
+}
+function fmtBytes(n){if(n<1024)return n+' B';if(n<1048576)return(n/1024).toFixed(1)+' KB';return(n/1048576).toFixed(2)+' MB';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-  document.getElementById('snippetUrl').textContent =
-`<!-- HTML: a div to render the table into -->
-<div id="my-table"></div>
-
-<script>
-  TBL.loadUrl('https://yoursite.com/data.tbl', document.getElementById('my-table'));
-<\/script>`;
-
-  document.getElementById('snippetFile').textContent =
-`<!-- HTML: file picker + display div -->
-<input type="file" accept=".tbl" id="tblFile" />
-<div id="my-table"></div>
-
-<script>
-  document.getElementById('tblFile').addEventListener('change', function () {
-    TBL.loadFile(this.files[0], document.getElementById('my-table'));
-  });
-<\/script>`;
-
-  document.getElementById('snippetParse').textContent =
-`// Parse binary ArrayBuffer → JavaScript object
-const buf = await fetch('data.tbl').then(r => r.arrayBuffer());
-const { columns, rows } = TBL.parse(buf);
-
-// columns: [{ name: 'id', type: 1 }, { name: 'label', type: 0 }, ...]
-// rows:    [[1, 'Alice'], [2, 'Bob'], ...]
-// Types:   0=STRING  1=INT32  2=FLOAT64  3=BOOL`;
-
-  document.getElementById('snippetEncode').textContent =
-`// Encode a table to binary .tbl ArrayBuffer
-const buf = TBL.encode({
-  columns: [
-    { name: 'id',    type: TBL.TYPE.INT32  },
-    { name: 'name',  type: TBL.TYPE.STRING },
-    { name: 'score', type: TBL.TYPE.FLOAT64 },
-    { name: 'active',type: TBL.TYPE.BOOL   }
-  ],
-  rows: [
-    [1, 'Alice', 98.5, true],
-    [2, 'Bob',   77.0, false]
-  ]
-});
-
-// Download it:
-const blob = new Blob([buf], { type: 'application/octet-stream' });
-const url = URL.createObjectURL(blob);
-const a = document.createElement('a');
-a.href = url; a.download = 'data.tbl'; a.click();`;
-
-  document.getElementById('snippetModal').classList.add('open');
+// ─── META ─────────────────────────────────────────────────────────────────────
+function applyMeta(){
+  if(meta.fontFamily){
+    loadFont(meta.fontFamily);
+    document.getElementById('editorTable').style.fontFamily=`'${meta.fontFamily}',monospace`;
+  }
+  if(meta.customFonts) meta.customFonts.forEach(loadFont);
+  document.getElementById('stFile').textContent=meta.title||currentFile;
 }
 
-function closeModal() {
-  document.getElementById('snippetModal').classList.remove('open');
-}
-
-document.getElementById('snippetModal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-// ════════════════════════════════════════════════════════════════════════════
-//  TOAST
-// ════════════════════════════════════════════════════════════════════════════
-function toast(msg, type = 'info') {
-  const c = document.getElementById('toastContainer');
-  const el = document.createElement('div');
-  el.className = 'toast ' + type;
-  el.textContent = msg;
-  c.appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 2800);
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-//  KEYBOARD SHORTCUTS
-// ════════════════════════════════════════════════════════════════════════════
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveTbl(); }
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); addRow(); }
-  if (e.key === 'Escape') { deselectAll(); closeModal(); }
-});
-
-// ════════════════════════════════════════════════════════════════════════════
-//  INIT
-// ════════════════════════════════════════════════════════════════════════════
-render();
-
-// Add sample data for demo
-function loadSample() {
-  columns = [
-    { name: 'id',       type: TYPE.INT32   },
-    { name: 'username', type: TYPE.STRING  },
-    { name: 'score',    type: TYPE.FLOAT64 },
-    { name: 'active',   type: TYPE.BOOL    },
-  ];
-  rows = [
-    [1, 'alice_k',  98.5, true],
-    [2, 'bob_m',    77.25, false],
-    [3, 'carol_99', 100.0, true],
-    [4, 'dave_x',   42.1, true],
-    [5, 'eve_2000', 55.75, false],
-  ];
+// ─── COLUMN ACTIONS ──────────────────────────────────────────────────────────
+function addColumn(){
+  const nameIn=document.getElementById('newColName');
+  const typeIn=document.getElementById('newColType');
+  const name=nameIn.value.trim().replace(/\s+/g,'_');
+  if(!name){toast('Column name required','err');return;}
+  if(columns.find(c=>c.name===name)){toast('Column name must be unique','err');return;}
+  const type=parseInt(typeIn.value);
+  const def=type===TYPE.BOOL?false:(STR_TYPES.has(type)?'':(type===TYPE.INT32?0:0.0));
+  columns.push({name,type,props:{width:null,align:'left',hidden:false}});
+  rows.forEach(row=>row.push(def));
+  nameIn.value='';
   render();
-  toast('Sample data loaded — try saving it as binary!', 'info');
+  toast(`Column "${name}" added`,'ok');
 }
-</script>
 
+function removeCol(ci){
+  const n=columns[ci].name;
+  columns.splice(ci,1);
+  rows.forEach(r=>r.splice(ci,1));
+  if(activeCol===ci)activeCol=-1;
+  else if(activeCol>ci)activeCol--;
+  render();
+  renderProps();
+  toast(`"${n}" removed`,'info');
+}
+
+// ─── ROW ACTIONS ──────────────────────────────────────────────────────────────
+function addRow(){
+  if(columns.length===0){toast('Add a column first','err');return;}
+  rows.push(columns.map(col=>col.type===TYPE.BOOL?false:STR_TYPES.has(col.type)?'':0));
+  render();
+  document.getElementById('tableVp').scrollTop=9999;
+}
+
+function deleteSelectedRows(){
+  if(selected.size===0){toast('Select rows first','err');return;}
+  rows=rows.filter((_,i)=>!selected.has(i));
+  selected.clear();
+  render();
+  toast('Rows deleted','info');
+}
+
+function duplicateSelectedRows(){
+  if(selected.size===0){toast('Select rows first','err');return;}
+  const add=[...selected].sort().map(i=>[...rows[i]]);
+  rows.push(...add);selected.clear();render();toast(`Duplicated ${add.length} row(s)`,'ok');
+}
+
+function clearRows(){
+  if(!rows.length)return;
+  if(!confirm(`Clear all ${rows.length} rows?`))return;
+  rows=[];selected.clear();render();toast('All rows cleared','info');
+}
+
+// ─── SELECTION ────────────────────────────────────────────────────────────────
+function toggleSel(ri){
+  selected.has(ri)?selected.delete(ri):selected.add(ri);
+  const tr=document.querySelector(`tr[data-ri="${ri}"]`);
+  if(tr)tr.classList.toggle('row-sel',selected.has(ri));
+  document.getElementById('selInfo').textContent=selected.size?`${selected.size} selected`:'';
+}
+function selectAll(){rows.forEach((_,i)=>selected.add(i));render();}
+function deselectAll(){selected.clear();document.getElementById('selInfo').textContent='';render();}
+
+// ─── SORT ─────────────────────────────────────────────────────────────────────
+function sortByCI(ci,dir){
+  rows.sort((a,b)=>{
+    const va=a[ci],vb=b[ci];
+    if(typeof va==='boolean')return(va===vb?0:va?-1:1)*dir;
+    if(typeof va==='number')return(va-vb)*dir;
+    return String(va).localeCompare(String(vb))*dir;
+  });
+  render();toast(`Sorted by "${columns[ci].name}"`,'info');
+}
+function sortAsc(){const ci=+document.getElementById('sortSel').value;if(!isNaN(ci))sortByCI(ci,1);}
+function sortDesc(){const ci=+document.getElementById('sortSel').value;if(!isNaN(ci))sortByCI(ci,-1);}
+
+// ─── FILTER ───────────────────────────────────────────────────────────────────
+function filterRows(){filter=document.getElementById('searchIn').value;render();}
+function clearSearch(){document.getElementById('searchIn').value='';filter='';render();}
+
+// ─── HEX VIEWER ───────────────────────────────────────────────────────────────
+function toggleHex(){
+  hexOpen=!hexOpen;
+  document.getElementById('hexStrip').classList.toggle('open',hexOpen);
+  document.getElementById('hexBtn').style.color=hexOpen?'var(--accentL)':'';
+  if(hexOpen)renderHex();
+}
+function renderHex(){
+  if(columns.length===0){document.getElementById('hexStrip').textContent='No data.';return;}
+  const buf=encode();const b=new Uint8Array(buf);
+  const max=320;let html='';
+  for(let i=0;i<Math.min(b.length,max);i+=16){
+    const chunk=b.slice(i,i+16);
+    const addr=i.toString(16).padStart(8,'0').toUpperCase();
+    let hx='',asc='';
+    chunk.forEach((byte,idx)=>{
+      const h=byte.toString(16).padStart(2,'0').toUpperCase();
+      const abs=i+idx;
+      const cls=abs<3?'hb-magic':abs===3?'hb-ver':'';
+      hx+=`<span class="${cls}">${h}</span> `;
+      asc+=(byte>=32&&byte<127)?String.fromCharCode(byte):'·';
+    });
+    html+=`<div class="hex-row"><span class="hex-addr">${addr}</span><span class="hex-bytes">${hx}</span><span class="hex-asc">${asc}</span></div>`;
+  }
+  if(b.length>max)html+=`<div style="color:var(--text3);padding:2px 0">… ${b.length-max} more bytes (${fmtBytes(b.byteLength)} total)</div>`;
+  document.getElementById('hexStrip').innerHTML=html;
+}
+
+// ─── RIGHT PANEL — COLUMN PROPERTIES ─────────────────────────────────────────
+function openProps(ci){
+  activeCol=ci;
+  render();
+  renderProps();
+}
+function closeProps(){
+  activeCol=-1;
+  render();
+  document.getElementById('rpBody').innerHTML='<p style="font-size:11px;color:var(--text3)">Click a column header to edit its properties.</p>';
+  document.getElementById('rpTitle').textContent='Column Properties';
+}
+function renderProps(){
+  if(activeCol<0||activeCol>=columns.length)return;
+  const col=columns[activeCol];
+  const p=col.props||{};
+  document.getElementById('rpTitle').textContent=col.name;
+  document.getElementById('rpBody').innerHTML=`
+    <div class="rp-field"><label>Name</label>
+      <input type="text" id="rp_name" value="${esc(col.name)}" oninput="updateColProp('name',this.value)">
+    </div>
+    <div class="rp-field"><label>Type</label>
+      <select id="rp_type" onchange="updateColType(this.value)">
+        ${TYPE_NAME.map((n,i)=>`<option value="${i}" ${i===col.type?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    <div class="divider"></div>
+    <div class="rp-field"><label>Column Width (px)</label>
+      <input type="number" id="rp_w" value="${p.width||''}" placeholder="auto" oninput="updateColPropN('width',this.value)" min="40" max="600">
+    </div>
+    <div class="rp-field"><label>Alignment</label>
+      <select id="rp_align" onchange="updateColPropK('align',this.value)">
+        <option value="left" ${p.align==='left'?'selected':''}>Left</option>
+        <option value="center" ${p.align==='center'?'selected':''}>Center</option>
+        <option value="right" ${p.align==='right'?'selected':''}>Right</option>
+      </select>
+    </div>
+    <div class="divider"></div>
+    <div class="toggle-row">
+      <span class="toggle-lbl">Hidden</span>
+      <label class="toggle">
+        <input type="checkbox" ${p.hidden?'checked':''} onchange="updateColPropK('hidden',this.checked)">
+        <span class="toggle-track"></span>
+        <span class="toggle-thumb"></span>
+      </label>
+    </div>
+    ${col.type===TYPE.FONT?`<div class="rp-field"><label>Preview Font</label>
+      <input type="text" id="rp_pfont" placeholder="Type font name to preview" oninput="previewFont(this.value)">
+      <div id="fontPv" style="margin-top:8px;font-size:18px;color:var(--text2)">The quick brown fox</div>
+    </div>`:''}
+    ${col.type===TYPE.IMAGE_URL?`<div class="rp-field"><label>Default/Fallback URL</label>
+      <input type="url" placeholder="https://…" value="${esc(p.defaultUrl||'')}">
+    </div>`:''}
+    <div class="divider"></div>
+    <button class="btn btn-danger btn-sm" onclick="removeCol(${activeCol})">Remove Column</button>
+  `;
+}
+
+function updateColProp(key,val){
+  if(key==='name'){
+    const trimmed=val.trim().replace(/\s+/g,'_');
+    if(!trimmed)return;
+    columns[activeCol].name=trimmed;
+  } else {
+    columns[activeCol].props=columns[activeCol].props||{};
+    columns[activeCol].props[key]=val;
+  }
+  renderColList();
+  // Re-render thead only
+  const h=document.getElementById('edThead');
+  if(h)h.querySelectorAll('th[data-ci]').forEach(th=>{
+    const ci=+th.dataset.ci;
+    if(ci===activeCol){th.querySelector('.th-name').textContent=columns[ci].name;}
+  });
+}
+function updateColPropN(key,val){
+  columns[activeCol].props=columns[activeCol].props||{};
+  columns[activeCol].props[key]=val?parseInt(val)||null:null;
+}
+function updateColPropK(key,val){
+  columns[activeCol].props=columns[activeCol].props||{};
+  columns[activeCol].props[key]=val;
+}
+function updateColType(val){
+  const t=parseInt(val);
+  columns[activeCol].type=t;
+  const def=t===TYPE.BOOL?false:STR_TYPES.has(t)?'':0;
+  rows.forEach(r=>{r[activeCol]=def;});
+  render();
+  renderProps();
+  toast(`Column type changed to ${TYPE_NAME[t]}`,'info');
+}
+function previewFont(name){
+  loadFont(name);
+  const el=document.getElementById('fontPv');
+  if(el)el.style.fontFamily=name?`'${name}',sans-serif`:'';
+}
+
+// ─── META MODAL ───────────────────────────────────────────────────────────────
+function showMeta(){
+  document.getElementById('m_title').value=meta.title||'';
+  document.getElementById('m_desc').value=meta.description||'';
+  document.getElementById('m_font').value=meta.fontFamily||'';
+  document.getElementById('m_theme').value=meta.theme||'dark';
+  document.getElementById('m_fonts').value=(meta.customFonts||[]).join(', ');
+  document.getElementById('metaOverlay').classList.add('open');
+}
+function saveMeta(){
+  meta.title=document.getElementById('m_title').value.trim();
+  meta.description=document.getElementById('m_desc').value.trim();
+  meta.fontFamily=document.getElementById('m_font').value.trim();
+  meta.theme=document.getElementById('m_theme').value;
+  meta.customFonts=document.getElementById('m_fonts').value.split(',').map(s=>s.trim()).filter(Boolean);
+  closeOverlay('metaOverlay');
+  applyMeta();
+  toast('Table settings saved','ok');
+}
+
+// ─── SNIPPET MODAL ────────────────────────────────────────────────────────────
+function showSnippet(){document.getElementById('snippetOverlay').classList.add('open');}
+
+// ─── OVERLAY HELPERS ──────────────────────────────────────────────────────────
+function closeOverlay(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ─── SAVE / LOAD ──────────────────────────────────────────────────────────────
+function saveTbl(){
+  if(columns.length===0){toast('Add columns before saving','err');return;}
+  const buf=encode();
+  const blob=new Blob([buf],{type:'application/octet-stream'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=(meta.title||currentFile||'table')+'.tbl';a.click();
+  URL.revokeObjectURL(url);
+  toast(`Saved ${fmtBytes(buf.byteLength)} — ${rows.length} rows, ${columns.length} cols`,'ok');
+}
+
+function triggerOpen(){document.getElementById('fileIn').click();}
+
+function openFile(e){
+  const file=e.target.files[0];if(!file)return;
+  file.arrayBuffer().then(buf=>{
+    try{
+      const d=decode(buf);
+      columns=d.columns;rows=d.rows;meta=d.meta||{};
+      selected.clear();filter='';activeCol=-1;
+      currentFile=file.name.replace(/\.tbl$/i,'');
+      document.getElementById('stFile').textContent=meta.title||currentFile;
+      render();
+      toast(`Loaded "${file.name}" — ${rows.length} rows, ${columns.length} cols`,'ok');
+    }catch(err){toast('Error: '+err.message,'err');}
+  });
+  e.target.value='';
+}
+
+function newTable(){
+  if(!confirm('Start a new table? Unsaved data will be lost.'))return;
+  columns=[];rows=[];meta={};selected.clear();filter='';activeCol=-1;currentFile='untitled';
+  document.getElementById('stFile').textContent='untitled';
+  render();toast('New table','info');
+}
+
+// ─── SAMPLE DATA ──────────────────────────────────────────────────────────────
+function loadSample(){
+  columns=[
+    {name:'id',       type:TYPE.INT32,    props:{width:60,align:'right'}},
+    {name:'name',     type:TYPE.STRING,   props:{width:140,align:'left'}},
+    {name:'avatar',   type:TYPE.IMAGE_URL,props:{width:200}},
+    {name:'role_color',type:TYPE.COLOR,   props:{width:160}},
+    {name:'score',    type:TYPE.FLOAT64,  props:{align:'right'}},
+    {name:'active',   type:TYPE.BOOL,     props:{align:'center',width:70}},
+    {name:'joined',   type:TYPE.DATE,     props:{}},
+    {name:'ui_font',  type:TYPE.FONT,     props:{width:180}},
+  ];
+  rows=[
+    [1,'Alice Chen',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=alice',  '#3b82f6',98.5, true, '2023-01-15','Pacifico'],
+    [2,'Bob Marsh',   'https://api.dicebear.com/7.x/pixel-art/svg?seed=bob',    '#8b5cf6',77.2, false,'2023-03-22','Bebas Neue'],
+    [3,'Carol Reed',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=carol',  '#10b981',100.0,true, '2022-11-01','Lobster'],
+    [4,'Dan Price',   'https://api.dicebear.com/7.x/pixel-art/svg?seed=dan',    '#f59e0b',42.1, true, '2024-06-10','Orbitron'],
+    [5,'Eve Santos',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=eve',    '#ef4444',55.75,false,'2024-01-28','Playfair Display'],
+  ];
+  meta={title:'Team Roster',description:'Sample dataset with all column types',fontFamily:'Outfit',theme:'dark'};
+  selected.clear();filter='';activeCol=-1;currentFile='team-roster';
+  render();
+  toast('Sample data loaded — all 8 column types shown','ok');
+}
+
+// ─── KEYBOARD SHORTCUTS ──────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveTbl();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();addRow();}
+  if(e.key==='Escape'){deselectAll();closeOverlay('metaOverlay');closeOverlay('snippetOverlay');closeProps();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='h'){e.preventDefault();toggleHex();}
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+render();
+</script>
 </body>
 </html>
