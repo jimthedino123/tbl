@@ -59,22 +59,6 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .btn-icon{padding:4px 7px}
 .btn-full{width:100%}
 
-/* SAVE DROPDOWN */
-.save-group{position:relative;display:flex;gap:0}
-.save-group .btn-primary:first-child{border-radius:var(--r) 0 0 var(--r);border-right:none}
-.save-group .btn-caret{border-radius:0 var(--r) var(--r) 0;padding:5px 8px;font-size:11px}
-.save-drop{position:absolute;top:calc(100% + 4px);right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);width:220px;z-index:200;display:none;box-shadow:0 16px 48px rgba(0,0,0,.7);overflow:hidden}
-.save-drop.show{display:block}
-.save-opt{display:flex;flex-direction:column;gap:2px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
-.save-opt:last-child{border-bottom:none}
-.save-opt:hover{background:var(--panel)}
-.save-opt-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text)}
-.ext-badge{font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.5px}
-.ext-v1{background:rgba(148,163,184,.12);color:var(--text3)}
-.ext-v2{background:rgba(59,130,246,.12);color:var(--accentL)}
-.ext-x{background:rgba(245,158,11,.15);color:var(--tblxL)}
-.save-opt-desc{font-size:9px;color:var(--text3)}
-
 /* LEFT SIDEBAR */
 #sidebar-left{width:252px;min-width:252px;border-right:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden;transition:width .2s,min-width .2s}
 #sidebar-left.collapsed{width:0;min-width:0}
@@ -339,36 +323,17 @@ Line 2: &lt;base-8 encoded JSON payload&gt;</pre>
       <button class="btn btn-amber btn-sm" onclick="openModal('modal-tblx')">? .tblx</button>
     </div>
     <div class="topbar-right">
-    <!-- REPLACE YOUR CURRENT SAVE GROUP WITH THIS -->
-
-<div class="save-group" style="display:flex;align-items:center;gap:6px">
-
-<select 
-  id="save-format"
-  style="
-    background:var(--panel);
-    border:1px solid var(--border2);
-    color:var(--text);
-    padding:5px 10px;
-    border-radius:var(--r);
-    font-family:'JetBrains Mono',monospace;
-    font-size:11px;
-    outline:none;
-  "
->
-  <option value="tbl">.tbl</option>
-  <option value="tblx">.tblx</option>
-  <option value="tbly">.tbly</option>
-</select>
-
-<button 
-  class="btn btn-primary"
-  onclick="saveTableUnified()"
->
-  ⬇ Download
-</button>
-
-</div>      </div>
+      <div class="save-group" style="display:flex;align-items:center;gap:6px">
+        <select
+          id="save-format"
+          style="background:var(--panel);border:1px solid var(--border2);color:var(--text);padding:5px 10px;border-radius:var(--r);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;"
+        >
+          <option value="tbl">.tbl</option>
+          <option value="tblx">.tblx</option>
+          <option value="tbly">.tbly</option>
+        </select>
+        <button class="btn btn-primary" onclick="saveTableUnified()">⬇ Download</button>
+      </div>
     </div>
   </div>
 
@@ -480,18 +445,14 @@ function loadFont(name) {
 
 // ═══════════════════════════════════════════════
 //  BASE-8 CIPHER
-//  A=0 B=1 C=2 D=3 E=4 F=5 G=6 H=7
-//  I=10 J=11 K=12 L=13 M=14 N=15 O=16 P=17
-//  Q=20 R=21 S=22 T=23 U=24 V=25 W=26 X=27
-//  Y=30 Z=31
 // ═══════════════════════════════════════════════
-const ENC_MAP = {}; // letter → octal string
-const DEC_MAP = {}; // octal string → letter
+const ENC_MAP = {};
+const DEC_MAP = {};
 (function buildCipher() {
   for (let i = 0; i < 26; i++) {
     const upper = String.fromCharCode(65 + i);
     const lower = String.fromCharCode(97 + i);
-    const oct   = i.toString(8); // 0,1,...,7,10,11,...,31
+    const oct   = i.toString(8);
     ENC_MAP[upper] = oct;
     ENC_MAP[lower] = oct;
     if (!DEC_MAP[oct]) DEC_MAP[oct] = upper;
@@ -512,7 +473,6 @@ function cipherDecrypt(str) {
   while (i < str.length) {
     const c = str[i];
     if (c >= '0' && c <= '7') {
-      // try 2-char token first (10-37 range)
       const two = str.slice(i, i + 2);
       if (two.length === 2 && DEC_MAP[two]) {
         out += DEC_MAP[two]; i += 2;
@@ -526,6 +486,20 @@ function cipherDecrypt(str) {
     }
   }
   return out;
+}
+
+// ═══════════════════════════════════════════════
+//  DOWNLOAD HELPER
+// ═══════════════════════════════════════════════
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ═══════════════════════════════════════════════
@@ -680,7 +654,7 @@ function flushCellInputs() {
     const r = +el.dataset.r, c = +el.dataset.c;
     if (!S.rows[r]) return;
     const t = S.columns[c]?.type;
-    if (t === TYPE.INT32)   S.rows[r][c] = parseInt(el.value, 10) || 0;
+    if (t === TYPE.INT32)        S.rows[r][c] = parseInt(el.value, 10) || 0;
     else if (t === TYPE.FLOAT64) S.rows[r][c] = parseFloat(el.value) || 0;
     else if (t !== TYPE.BOOL)    S.rows[r][c] = el.value;
   });
@@ -903,7 +877,6 @@ function syncMobSidebar() {
 //  COLUMN ACTIONS
 // ═══════════════════════════════════════════════
 function addColumn(btn) {
-  // btn is inside a sidebar; find sibling inputs
   const container = btn.closest('.sb-sec') || btn.closest('[id$="sidebar-content"]') || document;
   const nameEl = container.querySelector('.new-col-name') || document.querySelector('.new-col-name');
   const typeEl = container.querySelector('.new-col-type') || document.querySelector('.new-col-type');
@@ -1156,234 +1129,82 @@ function applyMeta() {
 // ═══════════════════════════════════════════════
 //  SAVE / LOAD
 // ═══════════════════════════════════════════════
-async function saveTableUnified(){
-
-  if(S.columns.length === 0){
-
-    toast('Add columns before saving','err');
-
-    return;
-
-  }
-
+async function saveTableUnified() {
+  if (S.columns.length === 0) { toast('Add columns before saving','err'); return; }
   flushCellInputs();
 
-  const format =
+  const format   = document.getElementById('save-format').value;
+  const filename = (S.meta.title || S.currentFile || 'table');
 
-    document.getElementById("save-format").value;
-
-  const filename =
-
-    (S.meta.title || S.currentFile || 'table');
-
-  /* ═══════════════════════════════
-
-     .TBL
-
-  ═══════════════════════════════ */
-
-  if(format === "tbl"){
-
-    const ab = encodeV2();
-
-    const blob = new Blob(
-
-      [ab],
-
-      {
-
-        type:'application/octet-stream'
-
-      }
-
-    );
-
+  // ── .TBL ────────────────────────────────────
+  if (format === 'tbl') {
+    const ab   = encodeV2();
+    const blob = new Blob([ab], { type:'application/octet-stream' });
     download(blob, filename + '.tbl');
-
     S.currentFmt = 'v2';
-
-    toast(
-
-      `Saved .tbl — ${fmtBytes(blob.size)}`,
-
-      'ok'
-
-    );
-
+    toast(`Saved .tbl — ${fmtBytes(blob.size)}`, 'ok');
     render();
-
     return;
-
   }
 
-  /* ═══════════════════════════════
-
-     .TBLX
-
-  ═══════════════════════════════ */
-
-  if(format === "tblx"){
-
+  // ── .TBLX ───────────────────────────────────
+  if (format === 'tblx') {
     const text = encodeTblx();
-
-    const blob = new Blob(
-
-      [text],
-
-      {
-
-        type:'text/plain'
-
-      }
-
-    );
-
+    const blob = new Blob([text], { type:'text/plain' });
     download(blob, filename + '.tblx');
-
     S.currentFmt = 'tblx';
-
-    toast(
-
-      `Saved .tblx — ${fmtBytes(blob.size)}`,
-
-      'tblx'
-
-    );
-
+    toast(`Saved .tblx — ${fmtBytes(blob.size)}`, 'tblx');
     render();
-
     return;
-
   }
 
-  /* ═══════════════════════════════
-
-     .TBLY
-
-  ═══════════════════════════════ */
-
-  if(format === "tbly"){
-
+  // ── .TBLY ───────────────────────────────────
+  if (format === 'tbly') {
     const zip = new JSZip();
 
-    // tblx file
+    zip.file('table.tblx', encodeTblx());
 
-    zip.file(
-
-      "table.tblx",
-
-      encodeTblx()
-
-    );
-
-    // styling css
-
-    zip.file(
-
-      "style.css",
-
-`
-
-body{
-
+    zip.file('style.css', `body{
   background:#06080f;
-
   color:#e2e8f0;
-
   font-family:'JetBrains Mono',monospace;
-
 }
-
 table{
-
   border-collapse:collapse;
-
   width:100%;
-
 }
-
 th{
-
   background:#121828;
-
   color:#60a5fa;
-
 }
-
 td,th{
-
   border:1px solid #243050;
-
   padding:8px;
-
 }
-
 tr:nth-child(even){
-
   background:#0e1220;
+}`);
 
+    zip.file('manifest.json', JSON.stringify({
+      format:  'tbly',
+      version: 1,
+      created: new Date().toISOString(),
+      title:   filename,
+      rows:    S.rows.length,
+      columns: S.columns.length
+    }, null, 2));
+
+    const blob = await zip.generateAsync({ type:'blob' });
+    download(blob, filename + '.tbly');
+    S.currentFmt = 'tbly';
+    toast(`Saved .tbly package — ${fmtBytes(blob.size)}`, 'ok');
+    render();
+  }
 }
 
-`
-
-    );
-
-    // manifest
-
-    zip.file(
-
-      "manifest.json",
-
-      JSON.stringify({
-
-        format: "tbly",
-
-        version: 1,
-
-        created: new Date().toISOString(),
-
-        title: filename,
-
-        rows: S.rows.length,
-
-        columns: S.columns.length
-
-      }, null, 2)
-
-    );
-
-    // generate blob
-
-    const blob = await zip.generateAsync({
-
-      type: "blob"
-
-    });
-
-    // fake extension
-
-    download(
-
-      blob,
-
-      filename + '.tbly'
-
-    );
-
-    S.currentFmt = 'tbly';
-
-    toast(
-
-      `Saved .tbly package — ${fmtBytes(blob.size)}`,
-
-      'ok'
-
-    );
-
-    render();
-
-  }
-
+// ═══════════════════════════════════════════════
+//  OPEN FILE
+// ═══════════════════════════════════════════════
 function openFile(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -1401,9 +1222,7 @@ function openFile(e) {
     file.arrayBuffer().then(ab => {
       try {
         let d, fmt;
-        // try v2 first
         try { d = decodeV2(ab); fmt='v2'; } catch(_) {
-          // fall back to v1
           d = decodeV1(ab); fmt='v1';
         }
         loadState(d, name.replace(/\.tbl$/i,''), fmt);
@@ -1435,21 +1254,21 @@ function newTable() {
 
 function loadSample() {
   S.columns = [
-    {name:'id',        type:TYPE.INT32,    props:{width:60, align:'right', hidden:false}},
-    {name:'name',      type:TYPE.STRING,   props:{width:140,align:'left',  hidden:false}},
-    {name:'avatar',    type:TYPE.IMAGE_URL,props:{width:200,              hidden:false}},
-    {name:'color',     type:TYPE.COLOR,    props:{width:160,              hidden:false}},
-    {name:'score',     type:TYPE.FLOAT64,  props:{align:'right',          hidden:false}},
-    {name:'active',    type:TYPE.BOOL,     props:{align:'center',width:70,hidden:false}},
-    {name:'joined',    type:TYPE.DATE,     props:{hidden:false}},
-    {name:'ui_font',   type:TYPE.FONT,     props:{width:180,              hidden:false}},
+    {name:'id',        type:TYPE.INT32,    props:{width:60,  align:'right',  hidden:false}},
+    {name:'name',      type:TYPE.STRING,   props:{width:140, align:'left',   hidden:false}},
+    {name:'avatar',    type:TYPE.IMAGE_URL,props:{width:200,                 hidden:false}},
+    {name:'color',     type:TYPE.COLOR,    props:{width:160,                 hidden:false}},
+    {name:'score',     type:TYPE.FLOAT64,  props:{           align:'right',  hidden:false}},
+    {name:'active',    type:TYPE.BOOL,     props:{width:70,  align:'center', hidden:false}},
+    {name:'joined',    type:TYPE.DATE,     props:{                           hidden:false}},
+    {name:'ui_font',   type:TYPE.FONT,     props:{width:180,                 hidden:false}},
   ];
   S.rows = [
-    [1,'Alice Chen',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=alice',  '#3b82f6',98.5, true, '2023-01-15','Pacifico'],
-    [2,'Bob Marsh',   'https://api.dicebear.com/7.x/pixel-art/svg?seed=bob',    '#8b5cf6',77.2, false,'2023-03-22','Bebas Neue'],
-    [3,'Carol Reed',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=carol',  '#10b981',100.0,true, '2022-11-01','Lobster'],
-    [4,'Dan Price',   'https://api.dicebear.com/7.x/pixel-art/svg?seed=dan',    '#f59e0b',42.1, true, '2024-06-10','Orbitron'],
-    [5,'Eve Santos',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=eve',    '#ef4444',55.75,false,'2024-01-28','Playfair Display'],
+    [1,'Alice Chen', 'https://api.dicebear.com/7.x/pixel-art/svg?seed=alice', '#3b82f6', 98.5,  true,  '2023-01-15','Pacifico'],
+    [2,'Bob Marsh',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=bob',   '#8b5cf6', 77.2,  false, '2023-03-22','Bebas Neue'],
+    [3,'Carol Reed', 'https://api.dicebear.com/7.x/pixel-art/svg?seed=carol', '#10b981', 100.0, true,  '2022-11-01','Lobster'],
+    [4,'Dan Price',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=dan',   '#f59e0b', 42.1,  true,  '2024-06-10','Orbitron'],
+    [5,'Eve Santos', 'https://api.dicebear.com/7.x/pixel-art/svg?seed=eve',   '#ef4444', 55.75, false, '2024-01-28','Playfair Display'],
   ];
   S.meta = {title:'Team Roster',description:'Sample — all 8 column types',fontFamily:'Outfit',theme:'dark'};
   S.selected.clear(); S.filter=''; S.activeCol=-1;
@@ -1495,12 +1314,9 @@ document.querySelectorAll('.overlay').forEach(o =>
 );
 
 // ═══════════════════════════════════════════════
-//  SAVE DROPDOWN
-// ═══════════════════════════════════════════════
-// ═══════════════════════════════════════════════
 //  MOBILE DRAWER
 // ═══════════════════════════════════════════════
-function openMobDrawer()  {
+function openMobDrawer() {
   syncMobSidebar();
   document.getElementById('mob-drawer').classList.add('show');
   document.getElementById('mob-overlay').classList.add('show');
@@ -1525,24 +1341,27 @@ function toast(msg, type='info') {
 // ═══════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   const mod = e.ctrlKey || e.metaKey;
-  if (mod && e.key==='s') {
-  e.preventDefault();
-  saveTableUnified();
-}
 
-if (mod && e.shiftKey && e.key==='S') {
-  e.preventDefault();
-  document.getElementById('save-format').value = 'tblx';
-  saveTableUnified();
-}
-saveTableUnified('tblx'); }
-  if (mod && e.key==='Enter')     { e.preventDefault(); addRow(); }
-  if (mod && e.key==='h')         { e.preventDefault(); toggleHex(); }
-  if (mod && e.key==='k')         { e.preventDefault(); toggleCipher(); }
-  if (e.key==='Escape') {
+  if (mod && e.key === 's') {
+    e.preventDefault();
+    saveTableUnified();
+    return;
+  }
+  if (mod && e.shiftKey && e.key === 'S') {
+    e.preventDefault();
+    document.getElementById('save-format').value = 'tblx';
+    saveTableUnified();
+    return;
+  }
+  if (mod && e.key === 'Enter') { e.preventDefault(); addRow(); return; }
+  if (mod && e.key === 'h')     { e.preventDefault(); toggleHex(); return; }
+  if (mod && e.key === 'k')     { e.preventDefault(); toggleCipher(); return; }
+
+  if (e.key === 'Escape') {
     deselectAll();
     document.querySelectorAll('.overlay.show').forEach(o => o.classList.remove('show'));
-    closeProps(); closeMobDrawer(); closeSaveDrop();
+    closeProps();
+    closeMobDrawer();
   }
 });
 
@@ -1552,4 +1371,4 @@ saveTableUnified('tblx'); }
 render();
 </script>
 </body>
-</html> 
+</html>
