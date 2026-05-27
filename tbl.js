@@ -2,133 +2,450 @@
 
 "use strict";
 
-const HEADER = "TBL1"; // file signature
+/*
+═══════════════════════════════════════
+ TBL.js v4
+═══════════════════════════════════════
 
-function encode(data){
+Formats:
+.tbl   → binary table
+.tblx  → encrypted text table
+.tbly  → packaged bundle
 
-  const json = typeof data === "string"
-    ? data
-    : JSON.stringify(data);
+*/
 
-  const encoder = new TextEncoder();
+const VERSION = 4;
 
-  const jsonBytes = encoder.encode(json);
+const MAGIC = {
+  TBL:  "TBL4",
+  TBLX: "TBLX4",
+  TBLY: "TBLY4"
+};
 
-  // create buffer: HEADER + JSON bytes
-  const headerBytes = new TextEncoder().encode(HEADER);
+const TYPES = {
+  STRING: 0,
+  INT: 1,
+  FLOAT: 2,
+  BOOL: 3
+};
 
-  const buffer = new Uint8Array(headerBytes.length + jsonBytes.length);
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
-  buffer.set(headerBytes, 0);
-  buffer.set(jsonBytes, headerBytes.length);
 
-  return buffer;
+
+
+
+/* ═══════════════════════════════════
+   HELPERS
+═══════════════════════════════════ */
+
+function strBytes(str){
+  return encoder.encode(str);
 }
 
-function decode(buffer){
+function readString(view, offsetObj){
 
-  const bytes = new Uint8Array(buffer);
+  const len = view.getUint32(offsetObj.o);
+  offsetObj.o += 4;
 
-  const header = new TextDecoder().decode(bytes.slice(0,4));
+  const bytes = new Uint8Array(
+    view.buffer,
+    offsetObj.o,
+    len
+  );
 
-  if(header !== HEADER){
-    throw new Error("Invalid .tbl file (bad header)");
+  offsetObj.o += len;
+
+  return decoder.decode(bytes);
+
+}
+
+function writeString(parts, str){
+
+  const bytes = strBytes(str);
+
+  const len = new Uint8Array(4);
+  new DataView(len.buffer).setUint32(0, bytes.length);
+
+  parts.push(len);
+  parts.push(bytes);
+
+}
+
+function concat(parts){
+
+  let total = 0;
+
+  for(const p of parts){
+    total += p.length;
   }
 
-  const jsonBytes = bytes.slice(4);
+  const out = new Uint8Array(total);
 
-  const json = new TextDecoder().decode(jsonBytes);
+  let offset = 0;
 
-  return json;
+  for(const p of parts){
+    out.set(p, offset);
+    offset += p.length;
+  }
+
+  return out;
+
 }
 
-class TBLTable {
 
-  constructor(data = {}) {
+
+
+
+/* ═══════════════════════════════════
+   BASIC XOR ENCRYPTION
+═══════════════════════════════════ */
+
+function xor(str, key="tbl"){
+
+  let out = "";
+
+  for(let i=0;i<str.length;i++){
+
+    out += String.fromCharCode(
+      str.charCodeAt(i) ^
+      key.charCodeAt(i % key.length)
+    );
+
+  }
+
+  return out;
+
+}
+
+function toBase64(str){
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+function fromBase64(str){
+  return decodeURIComponent(escape(atob(str)));
+}
+
+
+
+
+
+/* ═══════════════════════════════════
+   TABLE CLASS
+═══════════════════════════════════ */
+
+class Table {
+
+  constructor(data={}){
+
     this.columns = data.columns || [];
     this.rows = data.rows || [];
-    this.meta = data.meta || { created: new Date().toISOString() };
+
+    this.meta = data.meta || {
+      created: new Date().toISOString(),
+      theme: "dark"
+    };
+
   }
 
-  addColumn(name){
-    this.columns.push(name);
-    this.rows.forEach(r => r.push(""));
-    return this;
-  }
+  addColumn(name, type="STRING"){
 
-  addRow(row = []){
-    const newRow = [];
-    for(let i = 0; i < this.columns.length; i++){
-      newRow.push(row[i] ?? "");
+    this.columns.push({
+      name,
+      type
+    });
+
+    for(const row of this.rows){
+      row.push("");
     }
-    this.rows.push(newRow);
+
     return this;
+
+  }
+
+  addRow(data=[]){
+
+    const row = [];
+
+    for(let i=0;i<this.columns.length;i++){
+      row.push(data[i] ?? "");
+    }
+
+    this.rows.push(row);
+
+    return this;
+
   }
 
   toObject(){
+
     return {
+      version: VERSION,
       columns: this.columns,
       rows: this.rows,
       meta: this.meta
     };
+
   }
 
-  toBinary(){
-    return encode(this.toObject());
+
+
+
+
+  /* ═══════════════════════════════
+     .tbl
+  ═══════════════════════════════ */
+
+  toTBL(){
+
+    const json = JSON.stringify(this.toObject());
+
+    const jsonBytes = strBytes(json);
+
+    const parts = [];
+
+    parts.push(strBytes(MAGIC.TBL));
+
+    const len = new Uint8Array(4);
+    new DataView(len.buffer).setUint32(0, jsonBytes.length);
+
+    parts.push(len);
+    parts.push(jsonBytes);
+
+    return concat(parts);
+
   }
 
-  download(filename = "table.tbl"){
 
-    const blob = new Blob([this.toBinary()], {
-      type: "application/octet-stream"
+
+
+
+  /* ═══════════════════════════════
+     .tblx
+  ═══════════════════════════════ */
+
+  toTBLX(password="tbl"){
+
+    const json = JSON.stringify(this.toObject());
+
+    const encrypted = xor(json, password);
+
+    return `${MAGIC.TBLX}\n${toBase64(encrypted)}`;
+
+  }
+
+
+
+
+
+  /* ═══════════════════════════════
+     .tbly
+  ═══════════════════════════════ */
+
+  async toTBLY(styleCSS="", password="tbl"){
+
+    const tblx = this.toTBLX(password);
+
+    const zip = new JSZip();
+
+    zip.file("table.tblx", tblx);
+
+    zip.file("style.css", styleCSS);
+
+    zip.file("manifest.json", JSON.stringify({
+      version: VERSION,
+      created: new Date().toISOString()
+    }, null, 2));
+
+    return await zip.generateAsync({
+      type: "blob"
     });
+
+  }
+
+
+
+
+
+  /* ═══════════════════════════════
+     DOWNLOAD
+  ═══════════════════════════════ */
+
+  async download(options={}){
+
+    const {
+      format="tbl",
+      filename="table",
+      password="tbl",
+      css=""
+    } = options;
+
+    let blob;
+    let ext;
+
+    if(format === "tbl"){
+
+      blob = new Blob(
+        [this.toTBL()],
+        { type:"application/octet-stream" }
+      );
+
+      ext = ".tbl";
+
+    }
+
+    else if(format === "tblx"){
+
+      blob = new Blob(
+        [this.toTBLX(password)],
+        { type:"text/plain" }
+      );
+
+      ext = ".tblx";
+
+    }
+
+    else if(format === "tbly"){
+
+      blob = await this.toTBLY(css, password);
+
+      ext = ".tbly";
+
+    }
+
+    else {
+      throw new Error("Unknown format");
+    }
 
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
+
     a.href = url;
-    a.download = filename;
+    a.download = filename + ext;
 
     document.body.appendChild(a);
+
     a.click();
+
     a.remove();
 
     URL.revokeObjectURL(url);
+
   }
+
 }
 
-const TBL = {
 
-  Table: TBLTable,
 
-  encode,
-  decode,
 
-  parse(buffer){
 
-    const json = decode(buffer);
-    return new TBLTable(JSON.parse(json));
+/* ═══════════════════════════════════
+   PARSERS
+═══════════════════════════════════ */
 
-  },
+function parseTBL(buffer){
 
-  async fetch(url){
+  const view = new DataView(buffer);
 
-    const res = await fetch(url);
-    const buffer = await res.arrayBuffer();
+  const magic = decoder.decode(
+    new Uint8Array(buffer, 0, 4)
+  );
 
-    return this.parse(buffer);
+  if(magic !== MAGIC.TBL){
+    throw new Error("Invalid TBL file");
+  }
 
-  },
+  const len = view.getUint32(4);
 
-  async open(file){
+  const json = decoder.decode(
+    new Uint8Array(buffer, 8, len)
+  );
+
+  return new Table(JSON.parse(json));
+
+}
+
+function parseTBLX(text, password="tbl"){
+
+  const lines = text.split("\n");
+
+  if(lines[0].trim() !== MAGIC.TBLX){
+    throw new Error("Invalid TBLX file");
+  }
+
+  const encrypted = fromBase64(lines.slice(1).join("\n"));
+
+  const json = xor(encrypted, password);
+
+  return new Table(JSON.parse(json));
+
+}
+
+
+
+
+
+/* ═══════════════════════════════════
+   AUTO PARSER
+═══════════════════════════════════ */
+
+async function openFile(file, password="tbl"){
+
+  const name = file.name.toLowerCase();
+
+  if(name.endsWith(".tbl")){
 
     const buffer = await file.arrayBuffer();
-    return this.parse(buffer);
+
+    return parseTBL(buffer);
 
   }
 
-};
+  if(name.endsWith(".tblx")){
 
-global.TBL = TBL;
+    const text = await file.text();
+
+    return parseTBLX(text, password);
+
+  }
+
+  if(name.endsWith(".tbly")){
+
+    const zip = await JSZip.loadAsync(file);
+
+    const tblx = await zip.file("table.tblx").async("string");
+
+    return parseTBLX(tblx, password);
+
+  }
+
+  throw new Error("Unsupported file type");
+
+}
+
+
+
+
+
+/* ═══════════════════════════════════
+   EXPORT
+═══════════════════════════════════ */
+
+global.TBL = {
+
+  version: VERSION,
+
+  TYPES,
+
+  Table,
+
+  parseTBL,
+  parseTBLX,
+
+  openFile
+
+};
 
 })(window);
