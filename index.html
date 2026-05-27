@@ -1497,10 +1497,6 @@ document.querySelectorAll('.overlay').forEach(o =>
 // ═══════════════════════════════════════════════
 //  SAVE DROPDOWN
 // ═══════════════════════════════════════════════
-function toggleSaveDrop(e) { e.stopPropagation(); document.getElementById('save-drop').classList.toggle('show'); }
-function closeSaveDrop()   { document.getElementById('save-drop').classList.remove('show'); }
-document.addEventListener('click', () => closeSaveDrop());
-
 // ═══════════════════════════════════════════════
 //  MOBILE DRAWER
 // ═══════════════════════════════════════════════
@@ -1529,8 +1525,17 @@ function toast(msg, type='info') {
 // ═══════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   const mod = e.ctrlKey || e.metaKey;
-  if (mod && e.key==='s')         { e.preventDefault(); saveTableUnified('v2'); }
-  if (mod && e.shiftKey && e.key==='S') { e.preventDefault(); saveTableUnified('tblx'); }
+  if (mod && e.key==='s') {
+  e.preventDefault();
+  saveTableUnified();
+}
+
+if (mod && e.shiftKey && e.key==='S') {
+  e.preventDefault();
+  document.getElementById('save-format').value = 'tblx';
+  saveTableUnified();
+}
+saveTableUnified('tblx'); }
   if (mod && e.key==='Enter')     { e.preventDefault(); addRow(); }
   if (mod && e.key==='h')         { e.preventDefault(); toggleHex(); }
   if (mod && e.key==='k')         { e.preventDefault(); toggleCipher(); }
