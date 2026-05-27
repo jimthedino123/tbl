@@ -3,257 +3,492 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TBL Studio v3</title>
+<title>TBL Studio v4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Azeret+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
+/* ═══════════════════════════════════
+   RESET & TOKENS
+═══════════════════════════════════ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#06080f;--bg2:#0b0e18;--surface:#0e1220;--panel:#121828;--panel2:#161d2e;
-  --border:#1c2740;--border2:#243050;
-  --accent:#3b82f6;--accentL:#60a5fa;--accent2:#8b5cf6;--accent3:#f59e0b;
-  --green:#10b981;--red:#ef4444;--pink:#ec4899;
-  --tblx:#f59e0b;--tblxL:#fbbf24;
-  --text:#e2e8f0;--text2:#94a3b8;--text3:#475569;
-  --r:6px;
-}
-html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace}
-body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.5}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+  --bg:#080b12;
+  --bg1:#0c1020;
+  --bg2:#0f1525;
+  --surface:#121929;
+  --panel:#17203a;
+  --panel2:#1c2845;
+  --border:#1e2e50;
+  --border2:#283d65;
+  --border3:#324d80;
 
-/* LAYOUT */
+  --accent:#4f8fff;
+  --accentL:#78aaff;
+  --accentD:#3166cc;
+  --accent2:#a855f7;
+  --accent3:#fbbf24;
+  --green:#22d3a4;
+  --red:#ff5757;
+  --pink:#f472b6;
+  --cyan:#22d3ee;
+
+  --tblx:#f59e0b;
+  --tblxL:#fcd34d;
+  --tbly:#22d3a4;
+  --tblyL:#6ee7b7;
+
+  --text:#dde4f5;
+  --text2:#8899c0;
+  --text3:#3d5280;
+  --text4:#253360;
+
+  --r:5px;
+  --r2:8px;
+  --font-mono:'Azeret Mono',monospace;
+  --font-ui:'DM Sans',sans-serif;
+  --font-head:'Space Mono',monospace;
+
+  --glow-blue:0 0 20px rgba(79,143,255,.15);
+  --glow-green:0 0 20px rgba(34,211,164,.15);
+  --glow-amber:0 0 20px rgba(251,191,36,.15);
+}
+
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font-mono);font-size:12px}
+
+/* scanlines overlay */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);
+  pointer-events:none;z-index:9999;opacity:.4
+}
+/* noise grain */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.6
+}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--border3)}
+
+/* ═══════════════════════════════════
+   LAYOUT
+═══════════════════════════════════ */
 #app{display:flex;flex-direction:column;height:100vh;position:relative;z-index:1}
-#topbar{display:flex;align-items:center;gap:4px;padding:0 12px;height:50px;border-bottom:1px solid var(--border);background:rgba(6,8,15,.96);backdrop-filter:blur(16px);flex-shrink:0;overflow-x:auto}
+#topbar{display:flex;align-items:center;gap:3px;padding:0 10px;height:48px;border-bottom:1px solid var(--border);background:rgba(8,11,18,.97);backdrop-filter:blur(20px);flex-shrink:0;overflow-x:auto}
 #topbar::-webkit-scrollbar{height:0}
 #workspace{display:flex;flex:1;overflow:hidden}
-#statusbar{display:flex;align-items:center;gap:12px;padding:0 14px;height:28px;border-top:1px solid var(--border);background:var(--bg2);font-size:10px;color:var(--text3);flex-shrink:0;overflow:hidden}
+#statusbar{display:flex;align-items:center;gap:10px;padding:0 12px;height:26px;border-top:1px solid var(--border);background:var(--bg1);font-size:9px;color:var(--text3);flex-shrink:0;font-family:var(--font-mono);letter-spacing:.3px}
 
-/* LOGO */
-.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:var(--text);display:flex;align-items:center;gap:7px;padding-right:14px;border-right:1px solid var(--border);margin-right:6px;flex-shrink:0}
-.logo em{color:var(--accent);font-style:normal}
-.logo-v{font-size:9px;background:var(--accent);color:#fff;padding:2px 5px;border-radius:3px;font-weight:700;letter-spacing:1px}
-.topbar-right{margin-left:auto;display:flex;gap:4px;flex-shrink:0}
-.topbar-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 2px}
+/* ═══════════════════════════════════
+   LOGO
+═══════════════════════════════════ */
+.logo{
+  font-family:var(--font-head);font-weight:700;font-size:14px;
+  color:var(--text);display:flex;align-items:center;gap:8px;
+  padding-right:14px;border-right:1px solid var(--border);margin-right:4px;flex-shrink:0;
+  letter-spacing:1px
+}
+.logo-tbl{color:var(--accentL)}
+.logo-studio{color:var(--text2)}
+.logo-v{
+  font-size:8px;background:linear-gradient(135deg,var(--accentD),var(--accent));
+  color:#fff;padding:2px 5px;border-radius:3px;font-weight:700;letter-spacing:1px;
+  box-shadow:0 0 8px rgba(79,143,255,.4)
+}
+.topbar-right{margin-left:auto;display:flex;gap:3px;flex-shrink:0;align-items:center}
+.tsep{width:1px;height:18px;background:var(--border);margin:0 3px;flex-shrink:0}
 
-/* BUTTONS */
-.btn{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.4px;padding:5px 12px;border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;transition:all .1s;background:transparent;color:var(--text2);white-space:nowrap;flex-shrink:0}
-.btn:hover{border-color:var(--accent);color:var(--accentL);background:rgba(59,130,246,.07)}
-.btn:active{transform:scale(.97)}
-.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700}
-.btn-primary:hover{background:#2563eb;border-color:#2563eb;color:#fff}
-.btn-tblx{background:linear-gradient(135deg,#d97706,#f59e0b);color:#000;border-color:var(--tblx);font-weight:700}
-.btn-tblx:hover{background:linear-gradient(135deg,#b45309,#d97706);color:#000}
+/* ═══════════════════════════════════
+   BUTTONS
+═══════════════════════════════════ */
+.btn{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.3px;
+  padding:5px 11px;border:1px solid var(--border2);border-radius:var(--r);
+  cursor:pointer;transition:all .12s;background:transparent;color:var(--text2);
+  white-space:nowrap;flex-shrink:0;line-height:1
+}
+.btn:hover{border-color:var(--accent);color:var(--accentL);background:rgba(79,143,255,.06)}
+.btn:active{transform:scale(.96)}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--accentD),var(--accent));
+  color:#fff;border-color:var(--accent);font-weight:700;
+  box-shadow:0 2px 12px rgba(79,143,255,.25)
+}
+.btn-primary:hover{background:linear-gradient(135deg,#2255bb,var(--accentD));color:#fff;box-shadow:0 2px 18px rgba(79,143,255,.4)}
+
 .btn-ghost{border-color:transparent;color:var(--text3)}
 .btn-ghost:hover{border-color:var(--border2);color:var(--text2);background:var(--panel)}
-.btn-danger{border-color:rgba(239,68,68,.3);color:#f87171}
-.btn-danger:hover{background:rgba(239,68,68,.1);border-color:var(--red)}
-.btn-green{border-color:rgba(16,185,129,.3);color:#34d399}
-.btn-green:hover{background:rgba(16,185,129,.1);border-color:var(--green)}
-.btn-amber{border-color:rgba(245,158,11,.3);color:var(--tblxL)}
-.btn-amber:hover{background:rgba(245,158,11,.08);border-color:var(--tblx)}
-.btn-sm{padding:4px 9px;font-size:10px}
-.btn-xs{padding:2px 6px;font-size:9px}
+
+.btn-danger{border-color:rgba(255,87,87,.25);color:#ff8080}
+.btn-danger:hover{background:rgba(255,87,87,.1);border-color:var(--red)}
+
+.btn-green{border-color:rgba(34,211,164,.25);color:#34d399}
+.btn-green:hover{background:rgba(34,211,164,.08);border-color:var(--green)}
+
+.btn-amber{border-color:rgba(251,191,36,.25);color:var(--tblxL)}
+.btn-amber:hover{background:rgba(251,191,36,.07);border-color:var(--tblx)}
+
+.btn-teal{border-color:rgba(34,211,164,.25);color:var(--tblyL)}
+.btn-teal:hover{background:rgba(34,211,164,.07);border-color:var(--tbly)}
+
+.btn-sm{padding:4px 9px;font-size:9px}
+.btn-xs{padding:2px 7px;font-size:9px}
 .btn-icon{padding:4px 7px}
 .btn-full{width:100%}
 
-/* SAVE DROPDOWN */
-.save-group{position:relative;display:flex;gap:0}
-.save-group .btn-primary:first-child{border-radius:var(--r) 0 0 var(--r);border-right:none}
-.save-group .btn-caret{border-radius:0 var(--r) var(--r) 0;padding:5px 8px;font-size:11px}
-.save-drop{position:absolute;top:calc(100% + 4px);right:0;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);width:220px;z-index:200;display:none;box-shadow:0 16px 48px rgba(0,0,0,.7);overflow:hidden}
+/* ═══════════════════════════════════
+   SAVE DROPDOWN
+═══════════════════════════════════ */
+.save-group{position:relative;display:flex}
+.save-group .btn-primary:first-child{border-radius:var(--r) 0 0 var(--r);border-right-color:rgba(255,255,255,.15)}
+.save-group .btn-caret{border-radius:0 var(--r) var(--r) 0;padding:5px 9px;border-left:none}
+.save-drop{
+  position:absolute;top:calc(100% + 5px);right:0;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--r2);width:260px;z-index:200;display:none;
+  box-shadow:0 20px 60px rgba(0,0,0,.8),var(--glow-blue);
+  overflow:hidden
+}
 .save-drop.show{display:block}
-.save-opt{display:flex;flex-direction:column;gap:2px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+.save-opt{padding:10px 13px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
 .save-opt:last-child{border-bottom:none}
 .save-opt:hover{background:var(--panel)}
-.save-opt-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text)}
-.ext-badge{font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.5px}
-.ext-v1{background:rgba(148,163,184,.12);color:var(--text3)}
-.ext-v2{background:rgba(59,130,246,.12);color:var(--accentL)}
-.ext-x{background:rgba(245,158,11,.15);color:var(--tblxL)}
-.save-opt-desc{font-size:9px;color:var(--text3)}
+.save-opt-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text);margin-bottom:3px;font-family:var(--font-mono)}
+.save-opt-desc{font-size:9px;color:var(--text3);font-family:var(--font-ui)}
+.ext-badge{font-size:8px;padding:1px 6px;border-radius:3px;font-weight:700;letter-spacing:.8px}
+.ext-tbl{background:rgba(79,143,255,.12);color:var(--accentL)}
+.ext-tblx{background:rgba(251,191,36,.12);color:var(--tblxL)}
+.ext-tbly{background:rgba(34,211,164,.12);color:var(--tblyL)}
 
-/* LEFT SIDEBAR */
-#sidebar-left{width:252px;min-width:252px;border-right:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden;transition:width .2s,min-width .2s}
+/* ═══════════════════════════════════
+   LEFT SIDEBAR
+═══════════════════════════════════ */
+#sidebar-left{
+  width:240px;min-width:240px;border-right:1px solid var(--border);
+  background:var(--bg1);display:flex;flex-direction:column;
+  overflow:hidden;transition:width .2s,min-width .2s
+}
 #sidebar-left.collapsed{width:0;min-width:0}
-.sb-sec{padding:11px 11px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+
+.sb-sec{padding:10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:7px}
 .sb-sec.grow{flex:1;overflow:hidden}
-.sb-label{font-family:'Outfit',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:7px}
+.sb-label{
+  font-family:var(--font-ui);font-size:8px;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--text3);display:flex;align-items:center;gap:7px
+}
 .sb-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-/* FORMS */
-input[type=text],input[type=url],input[type=date],input[type=number],input[type=color],select,textarea{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 8px;border-radius:var(--r);outline:none;transition:border-color .1s}
-input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.1)}
+/* ═══════════════════════════════════
+   FORMS
+═══════════════════════════════════ */
+input[type=text],input[type=url],input[type=date],input[type=number],input[type=color],select,textarea{
+  width:100%;background:var(--bg2);border:1px solid var(--border);
+  color:var(--text);font-family:var(--font-mono);font-size:10px;
+  padding:5px 8px;border-radius:var(--r);outline:none;transition:border-color .12s
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,143,255,.1)}
 select option{background:var(--panel2)}
-input[type=color]{padding:2px 3px;height:30px;cursor:pointer}
-textarea{resize:vertical;min-height:50px;line-height:1.5}
+input[type=color]{padding:2px 3px;height:28px;cursor:pointer}
+textarea{resize:vertical;min-height:50px;line-height:1.6}
 
-/* COL LIST */
+/* ═══════════════════════════════════
+   COL LIST
+═══════════════════════════════════ */
 .col-list{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;min-height:0}
-.col-item{display:flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid var(--border);border-radius:4px;background:var(--panel);cursor:pointer;transition:all .1s}
-.col-item:hover{border-color:var(--border2);background:var(--panel2)}
-.col-item.active{border-color:var(--accent);background:rgba(59,130,246,.08)}
+.col-item{
+  display:flex;align-items:center;gap:5px;padding:5px 7px;
+  border:1px solid var(--border);border-radius:var(--r);background:var(--bg2);
+  cursor:pointer;transition:all .1s
+}
+.col-item:hover{border-color:var(--border2);background:var(--panel)}
+.col-item.active{border-color:var(--accent);background:rgba(79,143,255,.07)}
+.col-item .col-drag{color:var(--text4);cursor:grab;font-size:10px;padding:0 2px}
 .col-name{flex:1;font-size:10px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.type-chip{font-size:7px;padding:2px 4px;border-radius:3px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;flex-shrink:0}
-.tc-0{background:rgba(59,130,246,.15);color:#60a5fa}
-.tc-1{background:rgba(245,158,11,.15);color:#fbbf24}
-.tc-2{background:rgba(139,92,246,.15);color:#a78bfa}
-.tc-3{background:rgba(16,185,129,.15);color:#34d399}
-.tc-4{background:rgba(236,72,153,.15);color:#f472b6}
-.tc-5{background:rgba(239,68,68,.15);color:#f87171}
-.tc-6{background:rgba(251,191,36,.15);color:#fde68a}
-.tc-7{background:rgba(167,139,250,.15);color:#c4b5fd}
+.type-chip{
+  font-size:7px;padding:2px 5px;border-radius:3px;font-weight:700;
+  letter-spacing:.5px;text-transform:uppercase;flex-shrink:0
+}
+.tc-0{background:rgba(79,143,255,.12);color:var(--accentL)}
+.tc-1{background:rgba(251,191,36,.12);color:#fcd34d}
+.tc-2{background:rgba(168,85,247,.12);color:#c084fc}
+.tc-3{background:rgba(34,211,164,.12);color:#34d399}
+.tc-4{background:rgba(244,114,182,.12);color:#f9a8d4}
+.tc-5{background:rgba(34,211,238,.12);color:#67e8f9}
+.tc-6{background:rgba(251,146,60,.12);color:#fdba74}
+.tc-7{background:rgba(167,139,250,.12);color:#c4b5fd}
 
 .row-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
 .row-grid .btn-full{grid-column:1/-1}
 
-/* MAIN */
+/* ═══════════════════════════════════
+   MAIN
+═══════════════════════════════════ */
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
-.toolbar{display:flex;align-items:center;gap:5px;padding:6px 11px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;flex-wrap:wrap}
-.table-vp{flex:1;overflow:auto}
 
-/* TABLE */
-.tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
-.tbl th{background:var(--panel);color:var(--accentL);border:1px solid var(--border);position:sticky;top:0;z-index:5;padding:0;user-select:none}
-.th-inner{display:flex;align-items:center;gap:5px;padding:7px 9px;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600}
-.th-inner:hover{background:rgba(59,130,246,.07)}
-.th-name{font-size:10px;letter-spacing:.7px;text-transform:uppercase;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.th-acts{display:flex;gap:2px;padding-right:5px;opacity:0;transition:opacity .15s}
+.toolbar{
+  display:flex;align-items:center;gap:5px;padding:6px 10px;
+  border-bottom:1px solid var(--border);background:var(--bg1);
+  flex-shrink:0;flex-wrap:wrap
+}
+
+.table-vp{flex:1;overflow:auto;background:var(--bg)}
+
+/* ═══════════════════════════════════
+   TABLE
+═══════════════════════════════════ */
+.tbl{border-collapse:separate;border-spacing:0;width:100%;font-size:11px}
+.tbl th{
+  background:var(--bg2);color:var(--accentL);
+  border:1px solid var(--border);position:sticky;top:0;z-index:5;padding:0;
+  user-select:none
+}
+.th-inner{
+  display:flex;align-items:center;gap:5px;padding:6px 9px;cursor:pointer;
+  font-family:var(--font-ui);font-weight:600
+}
+.th-inner:hover{background:rgba(79,143,255,.06)}
+.th-name{
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-head)
+}
+.th-acts{display:flex;gap:2px;padding-right:4px;opacity:0;transition:opacity .12s}
 .tbl th:hover .th-acts{opacity:1}
-th.col-active{border-color:var(--accent)!important;background:rgba(59,130,246,.06)!important}
-.rn-th{background:rgba(0,0,0,.25)!important;color:var(--text3);font-size:9px;width:38px;text-align:center;cursor:default}
-.tbl td{border:1px solid var(--border);background:var(--surface);vertical-align:middle;padding:0;transition:background .07s}
-.tbl tr:hover td{background:var(--panel)}
-.tbl tr.sel td{background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.18)}
-.rn-td{background:rgba(0,0,0,.2)!important;color:var(--text3);font-size:9px;text-align:center;width:38px;padding:0 3px;pointer-events:none}
+th.col-active{border-color:var(--accent)!important;background:rgba(79,143,255,.06)!important}
+
+.rn-th{
+  background:rgba(0,0,0,.3)!important;color:var(--text4);
+  font-size:8px;width:36px;text-align:center;cursor:default
+}
+.tbl td{
+  border:1px solid var(--border);background:var(--bg);
+  vertical-align:middle;padding:0;transition:background .07s
+}
+.tbl tr:hover td{background:var(--bg1)}
+.tbl tr.sel td{background:rgba(79,143,255,.05);border-color:rgba(79,143,255,.15)}
+.rn-td{
+  background:rgba(0,0,0,.25)!important;color:var(--text4);font-size:8px;
+  text-align:center;width:36px;padding:0 3px;pointer-events:none;font-family:var(--font-mono)
+}
 td.focused{outline:2px solid var(--accent);outline-offset:-2px;z-index:2;position:relative}
 
-/* CELL INPUTS */
-.ci{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 9px;line-height:1.4}
-.ci::placeholder{color:var(--text3)}
-.ci-img{padding:4px 7px;display:flex;align-items:center;gap:6px}
-.img-thumb{width:40px;height:30px;object-fit:cover;border-radius:3px;border:1px solid var(--border);flex-shrink:0;background:var(--panel)}
-.img-thumb.err{display:none}
-.ci-color{display:flex;align-items:center;gap:6px;padding:3px 7px}
-.color-sw{width:20px;height:20px;border-radius:3px;border:1px solid rgba(255,255,255,.1);flex-shrink:0;cursor:pointer}
-.ci-bool{display:flex;align-items:center;justify-content:center;height:34px;cursor:pointer;font-size:17px;transition:transform .1s}
-.ci-bool:hover{transform:scale(1.2)}
-.ci-bool.on{color:var(--green)} .ci-bool.off{color:var(--text3)}
-.ci-font{padding:4px 7px;display:flex;flex-direction:column;gap:1px}
-.font-prev{font-size:13px;color:var(--text)}
+/* ═══════════════════════════════════
+   CELL INPUTS
+═══════════════════════════════════ */
+.ci{
+  width:100%;background:transparent;border:none;outline:none;
+  color:var(--text);font-family:var(--font-mono);font-size:11px;
+  padding:6px 9px;line-height:1.4;transition:background .1s
+}
+.ci::placeholder{color:var(--text4)}
+.ci:focus{background:rgba(79,143,255,.04)}
 
-/* STRIPS */
-.strip{border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:10px;padding:7px 11px;max-height:100px;overflow-y:auto;display:none;flex-shrink:0}
+.ci-img{padding:4px 7px;display:flex;align-items:center;gap:6px}
+.img-thumb{width:38px;height:28px;object-fit:cover;border-radius:3px;border:1px solid var(--border);flex-shrink:0;background:var(--panel)}
+
+.ci-color{display:flex;align-items:center;gap:6px;padding:3px 7px}
+.color-sw{width:20px;height:20px;border-radius:3px;border:1px solid rgba(255,255,255,.1);flex-shrink:0;cursor:pointer;padding:0}
+
+.ci-bool{
+  display:flex;align-items:center;justify-content:center;height:32px;
+  cursor:pointer;font-size:15px;transition:all .1s;user-select:none
+}
+.ci-bool:hover{transform:scale(1.15)}
+.ci-bool.on{color:var(--green)}
+.ci-bool.off{color:var(--text4)}
+
+.ci-font{padding:4px 7px;display:flex;flex-direction:column;gap:2px}
+.font-prev{font-size:13px;color:var(--text);line-height:1.3}
+
+/* ═══════════════════════════════════
+   STRIPS
+═══════════════════════════════════ */
+.strip{
+  border-top:1px solid var(--border);font-family:var(--font-mono);font-size:9px;
+  padding:7px 11px;max-height:96px;overflow-y:auto;display:none;flex-shrink:0
+}
 .strip.show{display:block}
-.hex-strip{background:var(--bg2);color:var(--text3)}
-.cipher-strip{background:rgba(245,158,11,.03);border-color:rgba(245,158,11,.2)}
-.hex-row{display:flex;gap:10px;line-height:1.9}
-.hex-addr{color:var(--accent);min-width:60px}
+.hex-strip{background:var(--bg1);color:var(--text3)}
+.cipher-strip{background:rgba(251,191,36,.02);border-color:rgba(251,191,36,.15)}
+.tbly-strip{background:rgba(34,211,164,.02);border-color:rgba(34,211,164,.15)}
+
+.hex-row{display:flex;gap:10px;line-height:2}
+.hex-addr{color:var(--accent);min-width:64px}
 .hex-bytes{color:var(--text);letter-spacing:1.5px;flex:1;word-break:break-all}
 .hex-asc{color:var(--accent2);min-width:100px}
 .hb-magic{color:var(--accent3);font-weight:700}
 .hb-ver{color:var(--accentL)}
-.cipher-label{font-size:9px;color:var(--text3);margin-bottom:3px;letter-spacing:1px;text-transform:uppercase}
-.cipher-text{color:var(--tblxL);line-height:1.8;word-break:break-all}
 
-/* RIGHT PANEL */
-#sidebar-right{width:284px;min-width:284px;border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow-y:auto;transition:width .2s,min-width .2s}
+.strip-label{font-size:8px;color:var(--text3);margin-bottom:3px;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--font-ui)}
+.cipher-text{color:var(--tblxL);line-height:1.9;word-break:break-all}
+.tbly-info{color:var(--tblyL);line-height:1.9}
+
+/* ═══════════════════════════════════
+   RIGHT PANEL
+═══════════════════════════════════ */
+#sidebar-right{
+  width:270px;min-width:270px;border-left:1px solid var(--border);
+  background:var(--bg1);display:flex;flex-direction:column;
+  overflow-y:auto;transition:width .2s,min-width .2s
+}
 #sidebar-right.collapsed{width:0;min-width:0}
-.rp-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.rp-title{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:var(--accentL);letter-spacing:.5px}
-.rp-body{padding:11px;display:flex;flex-direction:column;gap:9px}
-.rp-field{display:flex;flex-direction:column;gap:4px}
-.rp-field label{font-size:9px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
-.rp-2col{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
-.toggle-lbl{font-size:11px;color:var(--text2)}
-.tog{position:relative;width:32px;height:17px;cursor:pointer;flex-shrink:0}
-.tog input{opacity:0;width:0;height:0}
-.tog-track{position:absolute;inset:0;background:var(--border2);border-radius:8px;transition:.2s}
-.tog input:checked~.tog-track{background:var(--accent)}
-.tog-thumb{position:absolute;top:2px;left:2px;width:13px;height:13px;background:#fff;border-radius:50%;transition:.2s}
-.tog input:checked~.tog-track~.tog-thumb{left:17px}
-.divider{height:1px;background:var(--border);margin:2px 0}
 
-/* STATUS */
+.rp-head{
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+  background:var(--bg2)
+}
+.rp-title{font-family:var(--font-head);font-weight:700;font-size:10px;color:var(--accentL);letter-spacing:.5px}
+.rp-body{padding:10px;display:flex;flex-direction:column;gap:8px}
+
+.rp-field{display:flex;flex-direction:column;gap:4px}
+.rp-field label{font-size:8px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;font-family:var(--font-ui)}
+.rp-2col{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0}
+.toggle-lbl{font-size:10px;color:var(--text2);font-family:var(--font-ui)}
+.tog{position:relative;width:30px;height:16px;cursor:pointer;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-track{position:absolute;inset:0;background:var(--border2);border-radius:8px;transition:.18s}
+.tog input:checked~.tog-track{background:var(--accent)}
+.tog-thumb{position:absolute;top:2px;left:2px;width:12px;height:12px;background:#fff;border-radius:50%;transition:.18s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.tog input:checked~.tog-track~.tog-thumb{left:16px}
+.divider{height:1px;background:var(--border);margin:1px 0}
+
+/* ═══════════════════════════════════
+   STATUS BAR
+═══════════════════════════════════ */
 .st-dot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 2.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .st-item{display:flex;align-items:center;gap:4px;white-space:nowrap}
 .st-val{color:var(--text2)}
-.format-badge{font-size:8px;padding:1px 5px;border-radius:2px;font-weight:700;letter-spacing:.5px}
-.fb-v1{background:rgba(148,163,184,.12);color:var(--text3)}
-.fb-v2{background:rgba(59,130,246,.12);color:var(--accentL)}
-.fb-x{background:rgba(245,158,11,.15);color:var(--tblxL)}
+.format-badge{font-size:7px;padding:1px 5px;border-radius:2px;font-weight:700;letter-spacing:.8px}
+.fb-tbl{background:rgba(79,143,255,.12);color:var(--accentL)}
+.fb-tblx{background:rgba(251,191,36,.12);color:var(--tblxL)}
+.fb-tbly{background:rgba(34,211,164,.12);color:var(--tblyL)}
 
-/* EMPTY */
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;color:var(--text3)}
-.empty-ico{font-size:40px;opacity:.15}
-.empty-head{font-family:'Syne',sans-serif;font-size:13px;letter-spacing:2px;color:var(--border2)}
-.empty-sub{font-size:10px;text-align:center;max-width:260px;line-height:1.8}
+/* ═══════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════ */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:14px;color:var(--text3)}
+.empty-ico{font-size:36px;opacity:.1}
+.empty-head{font-family:var(--font-head);font-size:12px;letter-spacing:3px;color:var(--text4)}
+.empty-sub{font-size:10px;text-align:center;max-width:280px;line-height:1.9;font-family:var(--font-ui);color:var(--text3)}
+.empty-hint{
+  display:flex;gap:8px;flex-wrap:wrap;justify-content:center
+}
+.empty-hint span{
+  font-size:9px;padding:3px 8px;border:1px solid var(--border);
+  border-radius:3px;color:var(--text4);font-family:var(--font-mono)
+}
 
-/* MODALS */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:300;display:none;align-items:center;justify-content:center;padding:16px}
+/* ═══════════════════════════════════
+   MODALS
+═══════════════════════════════════ */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);
+  z-index:300;display:none;align-items:center;justify-content:center;padding:16px
+}
 .overlay.show{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:20px;width:580px;max-width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.7)}
-.modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--accentL);margin-bottom:14px}
-.modal h3{font-size:9px;color:var(--accent3);letter-spacing:1px;text-transform:uppercase;margin:12px 0 5px;font-family:'Outfit',sans-serif}
-.modal pre{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:10px;font-size:10px;overflow-x:auto;color:var(--text);line-height:1.8;margin-bottom:7px}
-.modal p{font-size:11px;color:var(--text2);line-height:1.7;margin-bottom:7px}
-.modal-foot{display:flex;justify-content:flex-end;gap:7px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.modal{
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);
+  padding:22px;width:600px;max-width:100%;max-height:90vh;overflow-y:auto;
+  box-shadow:0 40px 100px rgba(0,0,0,.9),var(--glow-blue)
+}
+.modal-title{font-family:var(--font-head);font-weight:700;font-size:14px;color:var(--accentL);margin-bottom:16px;letter-spacing:.5px}
+.modal h3{font-size:8px;color:var(--accent3);letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 5px;font-family:var(--font-ui)}
+.modal pre{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+  padding:10px;font-size:10px;overflow-x:auto;color:var(--text);line-height:1.9;
+  margin-bottom:7px;font-family:var(--font-mono)
+}
+.modal p{font-size:11px;color:var(--text2);line-height:1.8;margin-bottom:7px;font-family:var(--font-ui)}
+.modal-foot{display:flex;justify-content:flex-end;gap:7px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
 .modal-2col{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.tblx-info{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:var(--r);padding:11px;margin:8px 0}
-.tblx-info h4{font-size:9px;color:var(--tblxL);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;font-family:'Outfit',sans-serif}
-.tblx-info p{font-size:10px;color:var(--text2);line-height:1.7;margin:0}
-.cipher-ref{width:100%;border-collapse:collapse;font-size:10px;margin-top:7px}
-.cipher-ref td{padding:2px 6px;border:1px solid var(--border);text-align:center}
+
+.info-box{border-radius:var(--r);padding:11px;margin:8px 0}
+.info-tblx{background:rgba(251,191,36,.04);border:1px solid rgba(251,191,36,.18)}
+.info-tbly{background:rgba(34,211,164,.04);border:1px solid rgba(34,211,164,.18)}
+.info-box h4{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;font-family:var(--font-ui)}
+.info-box.info-tblx h4{color:var(--tblxL)}
+.info-box.info-tbly h4{color:var(--tblyL)}
+.info-box p{font-size:10px;color:var(--text2);line-height:1.8;margin:0;font-family:var(--font-ui)}
+
+.cipher-ref{width:100%;border-collapse:collapse;font-size:9px;margin-top:7px;font-family:var(--font-mono)}
+.cipher-ref td{padding:3px 6px;border:1px solid var(--border);text-align:center}
 .cipher-ref td:nth-child(odd){color:var(--text3)}
 .cipher-ref td:nth-child(even){color:var(--tblxL);font-weight:700}
 
-/* TOASTS */
-#toasts{position:fixed;top:14px;right:14px;z-index:500;display:flex;flex-direction:column;gap:5px;pointer-events:none}
-.toast{padding:7px 13px;border-radius:var(--r);font-size:11px;border:1px solid;animation:tIn .15s;box-shadow:0 6px 24px rgba(0,0,0,.5);font-family:'JetBrains Mono',monospace;max-width:300px}
-.t-ok{background:rgba(16,185,129,.1);border-color:var(--green);color:#34d399}
-.t-err{background:rgba(239,68,68,.1);border-color:var(--red);color:#f87171}
-.t-info{background:rgba(59,130,246,.08);border-color:var(--accent);color:var(--accentL)}
-.t-tblx{background:rgba(245,158,11,.08);border-color:var(--tblx);color:var(--tblxL)}
-@keyframes tIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+/* ═══════════════════════════════════
+   TOASTS
+═══════════════════════════════════ */
+#toasts{position:fixed;top:12px;right:12px;z-index:500;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.toast{
+  padding:8px 14px;border-radius:var(--r);font-size:10px;border:1px solid;
+  animation:tIn .15s;box-shadow:0 8px 28px rgba(0,0,0,.6);
+  font-family:var(--font-mono);max-width:320px;line-height:1.5
+}
+.t-ok{background:rgba(34,211,164,.08);border-color:var(--green);color:#6ee7b7}
+.t-err{background:rgba(255,87,87,.08);border-color:var(--red);color:#ff8080}
+.t-info{background:rgba(79,143,255,.07);border-color:var(--accent);color:var(--accentL)}
+.t-tblx{background:rgba(251,191,36,.06);border-color:var(--tblx);color:var(--tblxL)}
+.t-tbly{background:rgba(34,211,164,.06);border-color:var(--tbly);color:var(--tblyL)}
+@keyframes tIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
 
-/* MOBILE DRAWER */
-#mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400}
+/* ═══════════════════════════════════
+   MOBILE DRAWER
+═══════════════════════════════════ */
+#mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400}
 #mob-overlay.show{display:block}
-#mob-drawer{position:fixed;left:0;top:0;bottom:0;width:272px;background:var(--bg2);border-right:1px solid var(--border);z-index:410;transform:translateX(-100%);transition:transform .22s;display:flex;flex-direction:column;overflow-y:auto}
+#mob-drawer{
+  position:fixed;left:0;top:0;bottom:0;width:265px;background:var(--bg1);
+  border-right:1px solid var(--border);z-index:410;transform:translateX(-100%);
+  transition:transform .22s;display:flex;flex-direction:column;overflow-y:auto
+}
 #mob-drawer.show{transform:translateX(0)}
-.mob-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-bottom:1px solid var(--border);flex-shrink:0}
-.mob-drawer-title{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--accentL)}
+.mob-drawer-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 13px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg2)
+}
+.mob-drawer-title{font-family:var(--font-head);font-weight:700;font-size:11px;color:var(--accentL)}
 #mob-btn{display:none}
 
-/* RESPONSIVE */
-@media(max-width:900px){
-  #sidebar-right{width:240px;min-width:240px}
+/* ═══════════════════════════════════
+   PROGRESS BAR
+═══════════════════════════════════ */
+#progress-bar{
+  position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--accentD),var(--accentL),var(--cyan));
+  z-index:9998;transition:width .3s;width:0;box-shadow:0 0 8px var(--accent)
 }
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════ */
+@media(max-width:900px){#sidebar-right{width:240px;min-width:240px}}
 @media(max-width:700px){
   #sidebar-left,#sidebar-right{display:none}
   #mob-btn{display:flex}
-  .topbar-center{display:none}
+  .tc-center{display:none}
   #statusbar .st-item:nth-child(n+4){display:none}
 }
-@media(max-width:480px){
-  .modal-2col{grid-template-columns:1fr}
-  .modal{padding:14px}
-}
+@media(max-width:480px){.modal-2col{grid-template-columns:1fr}.modal{padding:14px}}
 </style>
 </head>
 <body>
 
+<div id="progress-bar"></div>
 <div id="toasts"></div>
 
-<!-- MOBILE OVERLAY + DRAWER -->
+<!-- MOBILE -->
 <div id="mob-overlay" onclick="closeMobDrawer()"></div>
 <div id="mob-drawer">
   <div class="mob-drawer-head">
-    <span class="mob-drawer-title">TBL Studio v3</span>
+    <span class="mob-drawer-title">TBL Studio v4</span>
     <button class="btn btn-xs btn-ghost" onclick="closeMobDrawer()">✕</button>
   </div>
   <div id="mob-sidebar-content"></div>
@@ -266,94 +501,155 @@ td.focused{outline:2px solid var(--accent);outline-offset:-2px;z-index:2;positio
   <div class="modal-2col">
     <div class="rp-field"><label>Table Title</label><input type="text" id="m-title" placeholder="My Dataset"></div>
     <div class="rp-field"><label>Description</label><input type="text" id="m-desc" placeholder="Short description"></div>
+    <div class="rp-field"><label>Author</label><input type="text" id="m-author" placeholder="Your name"></div>
     <div class="rp-field"><label>Default Font</label><input type="text" id="m-font" placeholder="e.g. Playfair Display"></div>
     <div class="rp-field"><label>Theme</label>
-      <select id="m-theme"><option value="dark">Dark</option><option value="terminal">Terminal</option><option value="amber">Amber</option></select>
+      <select id="m-theme">
+        <option value="dark">Dark</option>
+        <option value="terminal">Terminal</option>
+        <option value="amber">Amber</option>
+        <option value="ice">Ice</option>
+      </select>
     </div>
+    <div class="rp-field"><label>Accent Color</label><input type="color" id="m-accent" value="#4f8fff"></div>
   </div>
   <div class="rp-field" style="margin-top:8px"><label>Extra Google Fonts (comma-separated)</label><input type="text" id="m-fonts" placeholder="Lora, Pacifico, Bebas Neue"></div>
   <div class="modal-foot">
     <button class="btn" onclick="closeModal('modal-meta')">Cancel</button>
-    <button class="btn btn-primary" onclick="saveMeta()">Save</button>
+    <button class="btn btn-primary" onclick="saveMeta()">Save Settings</button>
   </div>
 </div></div>
 
 <!-- SNIPPET MODAL -->
 <div class="overlay" id="modal-snippet">
 <div class="modal">
-  <div class="modal-title">&lt;/&gt; Embed &amp; API</div>
+  <div class="modal-title">&lt;/&gt; API Reference</div>
   <h3>Include library</h3>
   <pre>&lt;script src="https://tbljs.netlify.app/tbl.js"&gt;&lt;/script&gt;</pre>
-  <h3>Load from URL</h3>
-  <pre>TBL.loadUrl('data.tbl', document.getElementById('out'));</pre>
-  <h3>Parse .tbl binary</h3>
-  <pre>const buf = await fetch('data.tbl').then(r=&gt;r.arrayBuffer());
-const { columns, rows, meta } = TBL.parse(buf);</pre>
-  <h3>Decode .tblx (Base-8 cipher)</h3>
-  <pre>const text = await fetch('data.tblx').then(r=&gt;r.text());
-const { columns, rows, meta } = TBL.parseX(text);</pre>
+  <h3>Load .tbl from URL</h3>
+  <pre>const tbl = await TBL.loadUrl('data.tbl');
+console.log(tbl.columns, tbl.rows, tbl.meta);</pre>
+  <h3>Load .tblx encrypted</h3>
+  <pre>const tbl = await TBL.loadUrl('data.tblx');
+// auto-detected cipher format</pre>
+  <h3>Load .tbly bundle</h3>
+  <pre>const { tbl, css } = await TBL.loadBundle('data.tbly');
+// tbl = table data, css = stylesheet string</pre>
+  <h3>Create programmatically</h3>
+  <pre>const t = new TBL.Table({ meta: { title: 'My Data' } });
+t.addColumn('name').addColumn('score');
+t.addRow(['Alice', 98]).addRow(['Bob', 77]);
+t.save('mydata.tbl'); // or .tblx / .tbly</pre>
   <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('modal-snippet')">Close</button></div>
 </div></div>
 
 <!-- TBLX INFO MODAL -->
 <div class="overlay" id="modal-tblx">
 <div class="modal">
-  <div class="modal-title">◈ .tblx — Base-8 Cipher Format</div>
-  <div class="tblx-info">
-    <h4>How it works</h4>
-    <p>The .tblx format encodes all data with a Base-8 (octal positional) letter-substitution cipher. Each letter A–Z maps to its alphabetical position written in octal: A=0, B=1… H=7, then I=10, J=11… Q=20… Z=31. Numbers and symbols pass through unchanged.</p>
+  <div class="modal-title">◈ Format Reference</div>
+  <div class="info-box info-tblx">
+    <h4>.tblx — Base-8 Cipher</h4>
+    <p>All text is encoded with a Base-8 (octal) letter-substitution cipher. Each letter A–Z maps to its alphabetical index in octal: A=0, B=1 … H=7, I=10, J=11 … Z=31. Numbers and symbols pass through unchanged.</p>
   </div>
-  <h3>Cipher Reference</h3>
+  <h3>Cipher Map</h3>
   <table class="cipher-ref">
     <tr><td>A</td><td>0</td><td>B</td><td>1</td><td>C</td><td>2</td><td>D</td><td>3</td><td>E</td><td>4</td><td>F</td><td>5</td><td>G</td><td>6</td><td>H</td><td>7</td></tr>
     <tr><td>I</td><td>10</td><td>J</td><td>11</td><td>K</td><td>12</td><td>L</td><td>13</td><td>M</td><td>14</td><td>N</td><td>15</td><td>O</td><td>16</td><td>P</td><td>17</td></tr>
     <tr><td>Q</td><td>20</td><td>R</td><td>21</td><td>S</td><td>22</td><td>T</td><td>23</td><td>U</td><td>24</td><td>V</td><td>25</td><td>W</td><td>26</td><td>X</td><td>27</td></tr>
-    <tr><td>Y</td><td>30</td><td>Z</td><td>31</td><td colspan="14" style="color:var(--text3);text-align:left;padding-left:8px">Lowercase same · Numbers/symbols unchanged</td></tr>
+    <tr><td>Y</td><td>30</td><td>Z</td><td>31</td><td colspan="12" style="color:var(--text3);text-align:left;padding-left:8px;font-family:var(--font-ui)">Lowercase maps same · Numbers/symbols unchanged</td></tr>
   </table>
-  <h3>Example</h3>
-  <pre>Plaintext:  NO      → Ciphertext: 1516
-Plaintext:  Hello   → Ciphertext: 74131316
-Plaintext:  TBLX    → Ciphertext: 23 1 13 27</pre>
-  <h3>File structure</h3>
-  <pre>Line 1: TBLX_V1
-Line 2: &lt;base-8 encoded JSON payload&gt;</pre>
+  <div class="info-box info-tbly" style="margin-top:12px">
+    <h4>.tbly — Styled Bundle</h4>
+    <p>A .tbly file is a ZIP archive (renamed) containing two files: <strong style="color:var(--text)">data.tblx</strong> (the base-8 encoded table data) and <strong style="color:var(--text)">theme.css</strong> (auto-generated stylesheet matching your table's visual configuration — colors, fonts, layout). Use TBL.loadBundle() to unpack both assets in one call.</p>
+  </div>
+  <h3>.tbly file structure</h3>
+  <pre>data.tbly/
+├── data.tblx   ← base-8 cipher encoded table
+└── theme.css   ← generated stylesheet (colors, fonts, layout)</pre>
   <div class="modal-foot"><button class="btn btn-primary" onclick="closeModal('modal-tblx')">Close</button></div>
+</div></div>
+
+<!-- IMPORT CSV MODAL -->
+<div class="overlay" id="modal-csv">
+<div class="modal">
+  <div class="modal-title">⬆ Import CSV</div>
+  <div class="rp-field">
+    <label>Paste CSV content</label>
+    <textarea id="csv-input" style="min-height:120px;font-size:10px" placeholder="name,score,active&#10;Alice,98,true&#10;Bob,77,false"></textarea>
+  </div>
+  <div style="display:flex;gap:6px;margin-top:8px">
+    <div class="rp-field" style="flex:1"><label>Delimiter</label>
+      <select id="csv-delim"><option value=",">Comma (,)</option><option value="	">Tab</option><option value=";">Semicolon (;)</option></select>
+    </div>
+    <div class="rp-field" style="flex:1"><label>First row is header</label>
+      <select id="csv-header"><option value="1">Yes</option><option value="0">No</option></select>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('modal-csv')">Cancel</button>
+    <button class="btn btn-primary" onclick="importCSV()">Import</button>
+  </div>
+</div></div>
+
+<!-- EXPORT CSV MODAL -->
+<div class="overlay" id="modal-export">
+<div class="modal" style="width:400px">
+  <div class="modal-title">⬇ Export Options</div>
+  <div class="rp-field" style="margin-bottom:8px"><label>Format</label>
+    <select id="export-fmt">
+      <option value="csv">CSV — comma separated</option>
+      <option value="tsv">TSV — tab separated</option>
+      <option value="json">JSON — array of objects</option>
+      <option value="jsonl">JSONL — newline delimited</option>
+      <option value="sql">SQL — INSERT statements</option>
+    </select>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" onclick="closeModal('modal-export')">Cancel</button>
+    <button class="btn btn-primary" onclick="doExport()">Export</button>
+  </div>
 </div></div>
 
 <!-- APP -->
 <div id="app">
-
   <!-- TOPBAR -->
   <div id="topbar">
     <button id="mob-btn" class="btn btn-ghost btn-icon" onclick="openMobDrawer()">☰</button>
-    <div class="logo">TBL<em>Studio</em><span class="logo-v">v3</span></div>
-    <div class="topbar-center" style="display:flex;gap:3px">
+    <div class="logo">
+      <span><span class="logo-tbl">TBL</span><span class="logo-studio">Studio</span></span>
+      <span class="logo-v">v4</span>
+    </div>
+    <div class="tc-center" style="display:flex;gap:3px">
       <button class="btn btn-ghost btn-sm" onclick="newTable()">⬜ New</button>
-      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('file-input').click()">⬆ Open</button>
+      <button class="btn btn-ghost btn-sm" onclick="triggerOpen()">⬆ Open</button>
       <button class="btn btn-ghost btn-sm" onclick="showMeta()">⚙ Settings</button>
       <button class="btn btn-ghost btn-sm" onclick="loadSample()">✦ Sample</button>
-      <div class="topbar-sep"></div>
+      <div class="tsep"></div>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-csv')">⬆ CSV</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export')">⬇ Export</button>
+      <div class="tsep"></div>
       <button class="btn btn-ghost btn-sm" onclick="toggleHex()" id="btn-hex">◈ Hex</button>
       <button class="btn btn-amber btn-sm" onclick="toggleCipher()" id="btn-cipher">⌬ Cipher</button>
-      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-snippet')">⌘ Embed</button>
-      <button class="btn btn-amber btn-sm" onclick="openModal('modal-tblx')">? .tblx</button>
+      <button class="btn btn-teal btn-sm" onclick="toggleTbly()" id="btn-tbly">◉ .tbly</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-snippet')">⌘ API</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-tblx')">? Formats</button>
     </div>
     <div class="topbar-right">
       <div class="save-group">
-        <button class="btn btn-primary" onclick="saveFile('v2')">⬇ Save .tbl</button>
+        <button class="btn btn-primary" id="btn-save-main" onclick="saveFile('tbl')">⬇ Save .tbl</button>
         <button class="btn btn-primary btn-caret" onclick="toggleSaveDrop(event)">▾</button>
         <div class="save-drop" id="save-drop">
-          <div class="save-opt" onclick="saveFile('v1');closeSaveDrop()">
-            <div class="save-opt-row">Legacy TBL <span class="ext-badge ext-v1">.tbl v1</span></div>
-            <div class="save-opt-desc">JSON wrapper — original format</div>
-          </div>
-          <div class="save-opt" onclick="saveFile('v2');closeSaveDrop()">
-            <div class="save-opt-row">TBL Binary <span class="ext-badge ext-v2">.tbl v2</span></div>
-            <div class="save-opt-desc">Typed binary — columns, props, meta</div>
+          <div class="save-opt" onclick="saveFile('tbl');closeSaveDrop()">
+            <div class="save-opt-row">TBL Binary <span class="ext-badge ext-tbl">.tbl</span></div>
+            <div class="save-opt-desc">Typed binary — columns, types, meta</div>
           </div>
           <div class="save-opt" onclick="saveFile('tblx');closeSaveDrop()">
-            <div class="save-opt-row">Encrypted <span class="ext-badge ext-x">.tblx</span></div>
-            <div class="save-opt-desc">Base-8 cipher — all data obfuscated</div>
+            <div class="save-opt-row">Encrypted <span class="ext-badge ext-tblx">.tblx</span></div>
+            <div class="save-opt-desc">Base-8 cipher — all text obfuscated</div>
+          </div>
+          <div class="save-opt" onclick="saveFile('tbly');closeSaveDrop()">
+            <div class="save-opt-row">Styled Bundle <span class="ext-badge ext-tbly">.tbly</span></div>
+            <div class="save-opt-desc">ZIP with data.tblx + theme.css inside</div>
           </div>
         </div>
       </div>
@@ -371,21 +667,26 @@ Line 2: &lt;base-8 encoded JSON payload&gt;</pre>
     <!-- MAIN -->
     <div id="main">
       <div class="toolbar">
-        <button class="btn btn-sm" onclick="selectAll()">☑ All</button>
-        <button class="btn btn-sm" onclick="deselectAll()">☐ None</button>
-        <div style="width:1px;height:18px;background:var(--border);margin:0 2px;flex-shrink:0"></div>
-        <div style="display:flex;align-items:center;flex:1;max-width:200px">
-          <input type="text" id="search-in" placeholder="Search…" oninput="onSearch()" style="border-radius:var(--r) 0 0 var(--r);border-right:none;font-size:11px">
-          <button class="btn" onclick="clearSearch()" style="border-radius:0 var(--r) var(--r) 0;padding:5px 7px">✕</button>
+        <button class="btn btn-sm btn-ghost" onclick="selectAll()">☑ All</button>
+        <button class="btn btn-sm btn-ghost" onclick="deselectAll()">☐ None</button>
+        <div style="width:1px;height:16px;background:var(--border);margin:0 1px;flex-shrink:0"></div>
+        <div style="display:flex;align-items:center;flex:1;max-width:220px">
+          <input type="text" id="search-in" placeholder="Search rows…" oninput="onSearch()" style="border-radius:var(--r) 0 0 var(--r);border-right:none;font-size:10px">
+          <button class="btn" onclick="clearSearch()" style="border-radius:0 var(--r) var(--r) 0;padding:5px 8px;border-left:none">✕</button>
         </div>
         <div style="flex:1"></div>
-        <span id="sel-info" style="font-size:10px;color:var(--text3)"></span>
+        <span id="sel-info" style="font-size:9px;color:var(--text3);font-family:var(--font-mono)"></span>
       </div>
       <div class="table-vp" id="table-vp">
         <div class="empty" id="empty-state">
           <div class="empty-ico">⊞</div>
           <div class="empty-head">EMPTY TABLE</div>
-          <div class="empty-sub">Add columns using the sidebar, fill in data, then save as .tbl (v1/v2) or encrypted .tblx</div>
+          <div class="empty-sub">Add columns via the sidebar or load a sample dataset to get started.</div>
+          <div class="empty-hint">
+            <span>⬆ Open .tbl/.tblx/.tbly</span>
+            <span>⬆ Import CSV</span>
+            <span>✦ Load Sample</span>
+          </div>
         </div>
         <table class="tbl" id="editor-table" style="display:none">
           <thead id="ed-thead"></thead>
@@ -394,23 +695,27 @@ Line 2: &lt;base-8 encoded JSON payload&gt;</pre>
       </div>
       <div class="strip hex-strip" id="hex-strip"></div>
       <div class="strip cipher-strip" id="cipher-strip">
-        <div class="cipher-label">⌬ Base-8 cipher preview</div>
+        <div class="strip-label">⌬ base-8 cipher preview</div>
         <div class="cipher-text" id="cipher-text"></div>
+      </div>
+      <div class="strip tbly-strip" id="tbly-strip">
+        <div class="strip-label">◉ .tbly bundle preview</div>
+        <div class="tbly-info" id="tbly-info"></div>
       </div>
     </div>
 
     <!-- RIGHT PANEL -->
     <div id="sidebar-right">
       <div class="rp-head">
-        <span class="rp-title" id="rp-title">Column Properties</span>
+        <span class="rp-title" id="rp-title">COLUMN PROPS</span>
         <button class="btn btn-ghost btn-xs" onclick="closeProps()">✕</button>
       </div>
       <div class="rp-body" id="rp-body">
-        <p style="font-size:11px;color:var(--text3)">Click a column header to edit its properties.</p>
+        <p style="font-size:10px;color:var(--text3);font-family:var(--font-ui);line-height:1.8">Click a column header to inspect and edit its properties.</p>
       </div>
     </div>
 
-  </div><!-- /workspace -->
+  </div>
 
   <!-- STATUS BAR -->
   <div id="statusbar">
@@ -418,42 +723,293 @@ Line 2: &lt;base-8 encoded JSON payload&gt;</pre>
     <div class="st-item">Rows <span class="st-val" id="st-rows">0</span></div>
     <div class="st-item">Cols <span class="st-val" id="st-cols">0</span></div>
     <div class="st-item">Size <span class="st-val" id="st-size">—</span></div>
-    <div class="st-item">Format <span id="st-fmt" class="format-badge fb-v2">v2</span></div>
+    <div class="st-item">Fmt <span id="st-fmt" class="format-badge fb-tbl">.tbl</span></div>
     <div class="st-item">File <span class="st-val" id="st-file">untitled</span></div>
     <div style="flex:1"></div>
-    <span style="color:var(--border2)">TBL Studio v3</span>
+    <span style="color:var(--text4);letter-spacing:.5px">TBL STUDIO v4</span>
   </div>
+</div>
 
-</div><!-- /app -->
+<input type="file" id="file-input" accept=".tbl,.tblx,.tbly" style="display:none" onchange="openFile(event)">
 
-<input type="file" id="file-input" accept=".tbl,.tblx" style="display:none" onchange="openFile(event)">
-
+<!-- ═══════════════════════════════════════════════════
+     TBL LIBRARY v4
+═══════════════════════════════════════════════════ -->
 <script>
 'use strict';
 
-// ═══════════════════════════════════════════════
-//  CONSTANTS
-// ═══════════════════════════════════════════════
+// ─── CONSTANTS ───────────────────────────────
 const TYPE = { STRING:0, INT32:1, FLOAT64:2, BOOL:3, IMAGE_URL:4, COLOR:5, DATE:6, FONT:7 };
 const TYPE_NAME = ['STRING','INT32','FLOAT64','BOOL','IMAGE_URL','COLOR','DATE','FONT'];
 const STR_TYPES = new Set([0,4,5,6,7]);
-const TBL_MAGIC = [0x54,0x42,0x4C]; // "TBL"
+const TBL_MAGIC = [0x54,0x42,0x4C];
 const TBL_VERSION = 2;
+
+// ─── BASE-8 CIPHER ───────────────────────────
+const ENC_MAP = {}, DEC_MAP = {};
+(function(){
+  for (let i = 0; i < 26; i++) {
+    const U = String.fromCharCode(65+i), L = String.fromCharCode(97+i);
+    const o = i.toString(8);
+    ENC_MAP[U] = ENC_MAP[L] = o;
+    if (!DEC_MAP[o]) DEC_MAP[o] = U;
+  }
+})();
+
+function cipherEncrypt(str) {
+  let out = '';
+  for (let i = 0; i < str.length; i++)
+    out += ENC_MAP[str[i]] !== undefined ? ENC_MAP[str[i]] : str[i];
+  return out;
+}
+function cipherDecrypt(str) {
+  let out = '', i = 0;
+  while (i < str.length) {
+    const c = str[i];
+    if (c >= '0' && c <= '7') {
+      const two = str.slice(i, i+2);
+      if (two.length === 2 && DEC_MAP[two]) { out += DEC_MAP[two]; i += 2; }
+      else if (DEC_MAP[c]) { out += DEC_MAP[c]; i++; }
+      else { out += c; i++; }
+    } else { out += c; i++; }
+  }
+  return out;
+}
+
+// ─── TBL v2 ENCODER ──────────────────────────
+function encodeV2(cols, rows, meta) {
+  const enc = new TextEncoder();
+  const metaB   = enc.encode(JSON.stringify(meta||{}));
+  const colNameB = cols.map(c => enc.encode(c.name));
+  const colPropB = cols.map(c => enc.encode(JSON.stringify(c.props||{})));
+
+  let size = 3+1+4+metaB.length+2+4;
+  for (let i = 0; i < cols.length; i++)
+    size += 1+1+colNameB[i].length+2+colPropB[i].length;
+
+  const cellB = [];
+  for (let r = 0; r < rows.length; r++) {
+    cellB.push([]);
+    for (let c = 0; c < cols.length; c++) {
+      const t = cols[c].type, v = rows[r][c];
+      if (STR_TYPES.has(t)) { const b = enc.encode(v==null?'':String(v)); cellB[r].push(b); size += 4+b.length; }
+      else if (t===TYPE.INT32)   { cellB[r].push(null); size += 4; }
+      else if (t===TYPE.FLOAT64) { cellB[r].push(null); size += 8; }
+      else if (t===TYPE.BOOL)    { cellB[r].push(null); size += 1; }
+    }
+  }
+
+  const ab = new ArrayBuffer(size), dv = new DataView(ab), b = new Uint8Array(ab);
+  let o = 0;
+  b[o++]=TBL_MAGIC[0]; b[o++]=TBL_MAGIC[1]; b[o++]=TBL_MAGIC[2]; b[o++]=TBL_VERSION;
+  dv.setUint32(o,metaB.length,false); o+=4;
+  b.set(metaB,o); o+=metaB.length;
+  dv.setUint16(o,cols.length,false); o+=2;
+  dv.setUint32(o,rows.length,false); o+=4;
+  for (let i = 0; i < cols.length; i++) {
+    b[o++]=cols[i].type; b[o++]=colNameB[i].length;
+    b.set(colNameB[i],o); o+=colNameB[i].length;
+    dv.setUint16(o,colPropB[i].length,false); o+=2;
+    b.set(colPropB[i],o); o+=colPropB[i].length;
+  }
+  for (let r = 0; r < rows.length; r++) {
+    for (let c = 0; c < cols.length; c++) {
+      const t = cols[c].type, v = rows[r][c];
+      if (STR_TYPES.has(t)) { const sb=cellB[r][c]; dv.setUint32(o,sb.length,false); o+=4; b.set(sb,o); o+=sb.length; }
+      else if (t===TYPE.INT32)   { dv.setInt32(o,v==null?0:(parseInt(v,10)||0),false); o+=4; }
+      else if (t===TYPE.FLOAT64) { dv.setFloat64(o,v==null?0:(parseFloat(v)||0),false); o+=8; }
+      else if (t===TYPE.BOOL)    { b[o++]=v?1:0; }
+    }
+  }
+  return ab;
+}
+
+function decodeV2(ab) {
+  const dv=new DataView(ab), b=new Uint8Array(ab), dec=new TextDecoder();
+  let o=0;
+  if(b[0]!==TBL_MAGIC[0]||b[1]!==TBL_MAGIC[1]||b[2]!==TBL_MAGIC[2])
+    throw new Error('Invalid TBL file — bad magic bytes');
+  o=3;
+  const ver=b[o++];
+  if(ver>TBL_VERSION) throw new Error(`TBL v${ver} not supported`);
+  let mt={};
+  if(ver>=2){const ml=dv.getUint32(o,false);o+=4;try{mt=JSON.parse(dec.decode(b.slice(o,o+ml)));}catch(_){}o+=ml;}
+  const cc=dv.getUint16(o,false);o+=2;
+  const rc=dv.getUint32(o,false);o+=4;
+  const cols=[];
+  for(let i=0;i<cc;i++){
+    const type=b[o++],nl=b[o++],name=dec.decode(b.slice(o,o+nl));o+=nl;
+    let props={};
+    if(ver>=2){const pl=dv.getUint16(o,false);o+=2;try{props=JSON.parse(dec.decode(b.slice(o,o+pl)));}catch(_){}o+=pl;}
+    cols.push({name,type,props});
+  }
+  const rows=[];
+  for(let r=0;r<rc;r++){
+    const row=[];
+    for(let c=0;c<cc;c++){
+      const t=cols[c].type;
+      if(STR_TYPES.has(t)){const len=ver>=2?dv.getUint32(o,false):dv.getUint16(o,false);o+=ver>=2?4:2;row.push(dec.decode(b.slice(o,o+len)));o+=len;}
+      else if(t===TYPE.INT32){row.push(dv.getInt32(o,false));o+=4;}
+      else if(t===TYPE.FLOAT64){row.push(dv.getFloat64(o,false));o+=8;}
+      else if(t===TYPE.BOOL){row.push(b[o++]!==0);}
+      else{row.push('');}
+    }
+    rows.push(row);
+  }
+  return{columns:cols,rows,meta:mt};
+}
+
+// ─── TBLX ────────────────────────────────────
+function encodeTblx(cols, rows, meta) {
+  const payload = JSON.stringify({
+    v:'tblx1', meta,
+    columns: cols.map(c=>({name:c.name,type:c.type,props:c.props})),
+    rows
+  });
+  return 'TBLX_V1\n' + cipherEncrypt(payload);
+}
+
+function decodeTblx(text) {
+  const lines = text.trim().split('\n');
+  if (lines[0].trim() !== 'TBLX_V1') throw new Error('Not a valid .tblx file');
+  const plain = cipherDecrypt(lines.slice(1).join('\n'));
+  const obj = JSON.parse(plain);
+  const cols = (obj.columns||[]).map(c=>
+    typeof c==='string'?{name:c,type:TYPE.STRING,props:{}}:{name:c.name,type:c.type??TYPE.STRING,props:c.props||{}}
+  );
+  return{columns:cols,rows:obj.rows||[],meta:obj.meta||{}};
+}
+
+// ─── THEME CSS GENERATOR ─────────────────────
+function generateThemeCSS(meta, cols) {
+  const accent = meta.accentColor || '#4f8fff';
+  const fontFamily = meta.fontFamily || 'inherit';
+  const theme = meta.theme || 'dark';
+
+  const themes = {
+    dark:     { bg:'#080b12', surface:'#0f1525', border:'#1e2e50', text:'#dde4f5' },
+    terminal: { bg:'#0a0f0a', surface:'#0d150d', border:'#1a3020', text:'#33ff66' },
+    amber:    { bg:'#100e04', surface:'#1a1608', border:'#3d3010', text:'#fcd34d' },
+    ice:      { bg:'#f0f4ff', surface:'#e8eeff', border:'#c0d0f0', text:'#1a2a5a' },
+  };
+  const t = themes[theme] || themes.dark;
+
+  const colStyles = cols.map((col,i)=>{
+    const w = col.props?.width ? `min-width:${col.props.width}px;max-width:${col.props.width}px;` : '';
+    const a = col.props?.align ? `text-align:${col.props.align};` : '';
+    return `.tbl-col-${i}{${w}${a}}`;
+  }).join('\n');
+
+  return `/* TBL Studio v4 — Generated Theme */
+/* Table: ${meta.title||'untitled'} */
+/* Author: ${meta.author||''} */
+/* Generated: ${new Date().toISOString()} */
+
+:root {
+  --tbl-bg: ${t.bg};
+  --tbl-surface: ${t.surface};
+  --tbl-border: ${t.border};
+  --tbl-text: ${t.text};
+  --tbl-accent: ${accent};
+  --tbl-font: '${fontFamily}', monospace;
+}
+
+.tbl-container {
+  background: var(--tbl-bg);
+  color: var(--tbl-text);
+  font-family: var(--tbl-font);
+  border: 1px solid var(--tbl-border);
+  border-radius: 6px;
+  overflow: auto;
+}
+
+.tbl-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.tbl-table th {
+  background: var(--tbl-surface);
+  color: var(--tbl-accent);
+  border: 1px solid var(--tbl-border);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+}
+
+.tbl-table td {
+  border: 1px solid var(--tbl-border);
+  padding: 7px 12px;
+  vertical-align: middle;
+  color: var(--tbl-text);
+}
+
+.tbl-table tr:hover td {
+  background: rgba(255,255,255,0.03);
+}
+
+${colStyles}
+
+/* Column type badges */
+.tbl-type-bool-true  { color: #22d3a4; }
+.tbl-type-bool-false { color: #3d5280; }
+.tbl-type-color      { display: inline-flex; align-items: center; gap: 6px; }
+.tbl-type-color-sw   { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid rgba(255,255,255,.15); }
+.tbl-type-image      { width: 40px; height: 30px; object-fit: cover; border-radius: 3px; }
+`;
+}
+
+// ─── TBLY (ZIP BUNDLE) ────────────────────────
+async function encodeTbly(cols, rows, meta) {
+  if (typeof JSZip === 'undefined') throw new Error('JSZip not loaded');
+  const zip = new JSZip();
+  const tblxContent = encodeTblx(cols, rows, meta);
+  const cssContent  = generateThemeCSS(meta, cols);
+  zip.file('data.tblx', tblxContent);
+  zip.file('theme.css', cssContent);
+  const blob = await zip.generateAsync({ type:'blob', compression:'DEFLATE', compressionOptions:{ level:6 } });
+  return blob;
+}
+
+async function decodeTbly(ab) {
+  if (typeof JSZip === 'undefined') throw new Error('JSZip not loaded');
+  const zip  = await JSZip.loadAsync(ab);
+  const tblxFile = zip.file('data.tblx');
+  const cssFile  = zip.file('theme.css');
+  if (!tblxFile) throw new Error('.tbly missing data.tblx');
+  const tblxText = await tblxFile.async('string');
+  const css = cssFile ? await cssFile.async('string') : '';
+  const tbl = decodeTblx(tblxText);
+  return { ...tbl, bundledCSS: css };
+}
+
+// ─── FLUSH CELL INPUTS ────────────────────────
+function flushCellInputs() {
+  document.querySelectorAll('.ci[data-r][data-c]').forEach(el=>{
+    const r=+el.dataset.r,c=+el.dataset.c;
+    if (!S.rows[r]) return;
+    const t=S.columns[c]?.type;
+    if(t===TYPE.INT32)       S.rows[r][c]=parseInt(el.value,10)||0;
+    else if(t===TYPE.FLOAT64) S.rows[r][c]=parseFloat(el.value)||0;
+    else if(t!==TYPE.BOOL)    S.rows[r][c]=el.value;
+  });
+}
 
 // ═══════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════
 let S = {
-  columns:  [],   // [{name, type, props:{width,align,hidden}}]
-  rows:     [],   // [[val,...], ...]
-  meta:     {},   // {title, description, fontFamily, theme, customFonts}
+  columns:[], rows:[], meta:{},
   selected: new Set(),
-  filter:   '',
-  activeCol: -1,
-  hexOpen:  false,
-  cipherOpen: false,
-  currentFile: 'untitled',
-  currentFmt: 'v2',
+  filter:'', activeCol:-1,
+  hexOpen:false, cipherOpen:false, tblyOpen:false,
+  currentFile:'untitled', currentFmt:'tbl',
+  undoStack:[], redoStack:[],
 };
 
 const loadedFonts = new Set();
@@ -461,381 +1017,188 @@ function loadFont(name) {
   if (!name || loadedFonts.has(name)) return;
   loadedFonts.add(name);
   const l = document.createElement('link');
-  l.rel = 'stylesheet';
-  l.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}&display=swap`;
+  l.rel='stylesheet';
+  l.href=`https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}&display=swap`;
   document.head.appendChild(l);
 }
 
-// ═══════════════════════════════════════════════
-//  BASE-8 CIPHER
-//  A=0 B=1 C=2 D=3 E=4 F=5 G=6 H=7
-//  I=10 J=11 K=12 L=13 M=14 N=15 O=16 P=17
-//  Q=20 R=21 S=22 T=23 U=24 V=25 W=26 X=27
-//  Y=30 Z=31
-// ═══════════════════════════════════════════════
-const ENC_MAP = {}; // letter → octal string
-const DEC_MAP = {}; // octal string → letter
-(function buildCipher() {
-  for (let i = 0; i < 26; i++) {
-    const upper = String.fromCharCode(65 + i);
-    const lower = String.fromCharCode(97 + i);
-    const oct   = i.toString(8); // 0,1,...,7,10,11,...,31
-    ENC_MAP[upper] = oct;
-    ENC_MAP[lower] = oct;
-    if (!DEC_MAP[oct]) DEC_MAP[oct] = upper;
-  }
-})();
-
-function cipherEncrypt(str) {
-  let out = '';
-  for (let i = 0; i < str.length; i++) {
-    const c = str[i];
-    out += (ENC_MAP[c] !== undefined) ? ENC_MAP[c] : c;
-  }
-  return out;
+// ─── UNDO / REDO ─────────────────────────────
+function snapshot() {
+  S.undoStack.push(JSON.stringify({columns:S.columns,rows:S.rows,meta:S.meta}));
+  if (S.undoStack.length > 60) S.undoStack.shift();
+  S.redoStack = [];
 }
-
-function cipherDecrypt(str) {
-  let out = '', i = 0;
-  while (i < str.length) {
-    const c = str[i];
-    if (c >= '0' && c <= '7') {
-      // try 2-char token first (10-37 range)
-      const two = str.slice(i, i + 2);
-      if (two.length === 2 && DEC_MAP[two]) {
-        out += DEC_MAP[two]; i += 2;
-      } else if (DEC_MAP[c]) {
-        out += DEC_MAP[c]; i++;
-      } else {
-        out += c; i++;
-      }
-    } else {
-      out += c; i++;
-    }
-  }
-  return out;
+function undo() {
+  if (!S.undoStack.length) return toast('Nothing to undo','err');
+  S.redoStack.push(JSON.stringify({columns:S.columns,rows:S.rows,meta:S.meta}));
+  const state = JSON.parse(S.undoStack.pop());
+  S.columns=state.columns; S.rows=state.rows; S.meta=state.meta;
+  S.selected.clear(); render(); toast('Undone','info');
 }
-
-// ═══════════════════════════════════════════════
-//  TBL v1 ENCODER (legacy — JSON wrapper)
-// ═══════════════════════════════════════════════
-function encodeV1() {
-  flushCellInputs();
-  const obj = { version:1, meta:S.meta, columns:S.columns.map(c=>c.name), rows:S.rows };
-  const enc = new TextEncoder();
-  const header = enc.encode('TBL1');
-  const body   = enc.encode(JSON.stringify(obj));
-  const buf = new Uint8Array(header.length + body.length);
-  buf.set(header, 0); buf.set(body, header.length);
-  return buf.buffer;
-}
-
-function decodeV1(ab) {
-  const bytes = new Uint8Array(ab);
-  const dec = new TextDecoder();
-  const header = dec.decode(bytes.slice(0, 4));
-  if (header !== 'TBL1') throw new Error('Not a v1 TBL file (expected TBL1 header)');
-  const json = dec.decode(bytes.slice(4));
-  const obj = JSON.parse(json);
-  const cols = (obj.columns || []).map(c =>
-    typeof c === 'string' ? { name:c, type:TYPE.STRING, props:{} } : { name:c.name||'col', type:c.type||0, props:c.props||{} }
-  );
-  return { columns:cols, rows:obj.rows||[], meta:obj.meta||{} };
-}
-
-// ═══════════════════════════════════════════════
-//  TBL v2 ENCODER (typed binary)
-// ═══════════════════════════════════════════════
-function encodeV2() {
-  flushCellInputs();
-  const enc = new TextEncoder();
-  const metaB   = enc.encode(JSON.stringify(S.meta || {}));
-  const colNameB = S.columns.map(c => enc.encode(c.name));
-  const colPropB = S.columns.map(c => enc.encode(JSON.stringify(c.props || {})));
-
-  let size = 3 + 1 + 4 + metaB.length + 2 + 4;
-  for (let i = 0; i < S.columns.length; i++)
-    size += 1 + 1 + colNameB[i].length + 2 + colPropB[i].length;
-
-  const cellB = [];
-  for (let r = 0; r < S.rows.length; r++) {
-    cellB.push([]);
-    for (let c = 0; c < S.columns.length; c++) {
-      const t = S.columns[c].type, v = S.rows[r][c];
-      if (STR_TYPES.has(t)) { const b = enc.encode(v == null ? '' : String(v)); cellB[r].push(b); size += 4 + b.length; }
-      else if (t === TYPE.INT32)   { cellB[r].push(null); size += 4; }
-      else if (t === TYPE.FLOAT64) { cellB[r].push(null); size += 8; }
-      else if (t === TYPE.BOOL)    { cellB[r].push(null); size += 1; }
-    }
-  }
-
-  const ab = new ArrayBuffer(size);
-  const dv = new DataView(ab);
-  const b  = new Uint8Array(ab);
-  let o = 0;
-  b[o++] = TBL_MAGIC[0]; b[o++] = TBL_MAGIC[1]; b[o++] = TBL_MAGIC[2]; b[o++] = TBL_VERSION;
-  dv.setUint32(o, metaB.length, false); o += 4;
-  b.set(metaB, o); o += metaB.length;
-  dv.setUint16(o, S.columns.length, false); o += 2;
-  dv.setUint32(o, S.rows.length, false); o += 4;
-  for (let i = 0; i < S.columns.length; i++) {
-    b[o++] = S.columns[i].type;
-    b[o++] = colNameB[i].length;
-    b.set(colNameB[i], o); o += colNameB[i].length;
-    dv.setUint16(o, colPropB[i].length, false); o += 2;
-    b.set(colPropB[i], o); o += colPropB[i].length;
-  }
-  for (let r = 0; r < S.rows.length; r++) {
-    for (let c = 0; c < S.columns.length; c++) {
-      const t = S.columns[c].type, v = S.rows[r][c];
-      if (STR_TYPES.has(t)) { const sb = cellB[r][c]; dv.setUint32(o, sb.length, false); o += 4; b.set(sb, o); o += sb.length; }
-      else if (t === TYPE.INT32)   { dv.setInt32(o, v == null ? 0 : (parseInt(v, 10) || 0), false); o += 4; }
-      else if (t === TYPE.FLOAT64) { dv.setFloat64(o, v == null ? 0 : (parseFloat(v) || 0), false); o += 8; }
-      else if (t === TYPE.BOOL)    { b[o++] = v ? 1 : 0; }
-    }
-  }
-  return ab;
-}
-
-function decodeV2(ab) {
-  const dv = new DataView(ab);
-  const b  = new Uint8Array(ab);
-  const dec = new TextDecoder();
-  let o = 0;
-  if (b[0]!==TBL_MAGIC[0]||b[1]!==TBL_MAGIC[1]||b[2]!==TBL_MAGIC[2])
-    throw new Error('Invalid TBL file — bad magic bytes');
-  o = 3;
-  const ver = b[o++];
-  if (ver > TBL_VERSION) throw new Error(`TBL v${ver} not supported (max v${TBL_VERSION})`);
-  let mt = {};
-  if (ver >= 2) { const ml = dv.getUint32(o, false); o += 4; try { mt = JSON.parse(dec.decode(b.slice(o, o+ml))); } catch(_){} o += ml; }
-  const cc = dv.getUint16(o, false); o += 2;
-  const rc = dv.getUint32(o, false); o += 4;
-  const cols = [];
-  for (let i = 0; i < cc; i++) {
-    const type = b[o++];
-    const nl   = b[o++];
-    const name = dec.decode(b.slice(o, o+nl)); o += nl;
-    let props = {};
-    if (ver >= 2) { const pl = dv.getUint16(o, false); o += 2; try { props = JSON.parse(dec.decode(b.slice(o, o+pl))); } catch(_){} o += pl; }
-    cols.push({ name, type, props });
-  }
-  const rows = [];
-  for (let r = 0; r < rc; r++) {
-    const row = [];
-    for (let c = 0; c < cc; c++) {
-      const t = cols[c].type;
-      if (STR_TYPES.has(t)) { const len = ver>=2 ? dv.getUint32(o,false) : dv.getUint16(o,false); o += ver>=2?4:2; row.push(dec.decode(b.slice(o,o+len))); o += len; }
-      else if (t === TYPE.INT32)   { row.push(dv.getInt32(o,false)); o += 4; }
-      else if (t === TYPE.FLOAT64) { row.push(dv.getFloat64(o,false)); o += 8; }
-      else if (t === TYPE.BOOL)    { row.push(b[o++] !== 0); }
-      else { row.push(''); }
-    }
-    rows.push(row);
-  }
-  return { columns:cols, rows, meta:mt };
-}
-
-// ═══════════════════════════════════════════════
-//  TBLX ENCODER/DECODER
-// ═══════════════════════════════════════════════
-function encodeTblx() {
-  flushCellInputs();
-  const payload = JSON.stringify({
-    v: 'tblx1',
-    meta: S.meta,
-    columns: S.columns.map(c => ({ name:c.name, type:c.type, props:c.props })),
-    rows: S.rows
-  });
-  return 'TBLX_V1\n' + cipherEncrypt(payload);
-}
-
-function decodeTblx(text) {
-  const lines = text.trim().split('\n');
-  if (lines[0].trim() !== 'TBLX_V1') throw new Error('Not a valid .tblx file (bad header)');
-  const encrypted = lines.slice(1).join('\n');
-  const plain = cipherDecrypt(encrypted);
-  const obj = JSON.parse(plain);
-  const cols = (obj.columns || []).map(c =>
-    typeof c === 'string' ? { name:c, type:TYPE.STRING, props:{} } : { name:c.name, type:c.type??TYPE.STRING, props:c.props||{} }
-  );
-  return { columns:cols, rows:obj.rows||[], meta:obj.meta||{} };
-}
-
-// flush live DOM inputs → S.rows
-function flushCellInputs() {
-  document.querySelectorAll('.ci[data-r][data-c]').forEach(el => {
-    const r = +el.dataset.r, c = +el.dataset.c;
-    if (!S.rows[r]) return;
-    const t = S.columns[c]?.type;
-    if (t === TYPE.INT32)   S.rows[r][c] = parseInt(el.value, 10) || 0;
-    else if (t === TYPE.FLOAT64) S.rows[r][c] = parseFloat(el.value) || 0;
-    else if (t !== TYPE.BOOL)    S.rows[r][c] = el.value;
-  });
+function redo() {
+  if (!S.redoStack.length) return toast('Nothing to redo','err');
+  S.undoStack.push(JSON.stringify({columns:S.columns,rows:S.rows,meta:S.meta}));
+  const state = JSON.parse(S.redoStack.pop());
+  S.columns=state.columns; S.rows=state.rows; S.meta=state.meta;
+  S.selected.clear(); render(); toast('Redone','info');
 }
 
 // ═══════════════════════════════════════════════
 //  RENDER
 // ═══════════════════════════════════════════════
 function render() {
-  renderTable();
-  renderSidebar();
-  updateStatus();
-  applyMeta();
-  if (S.hexOpen)    renderHex();
-  if (S.cipherOpen) renderCipher();
+  renderTable(); renderSidebar(); updateStatus(); applyMeta();
+  if(S.hexOpen)    renderHex();
+  if(S.cipherOpen) renderCipher();
+  if(S.tblyOpen)   renderTblyPreview();
 }
 
 function renderTable() {
-  const thead = document.getElementById('ed-thead');
-  const tbody = document.getElementById('ed-tbody');
-  const empty = document.getElementById('empty-state');
-  const table = document.getElementById('editor-table');
+  const thead=document.getElementById('ed-thead');
+  const tbody=document.getElementById('ed-tbody');
+  const empty=document.getElementById('empty-state');
+  const table=document.getElementById('editor-table');
 
-  const hasCols = S.columns.length > 0;
-  empty.style.display = hasCols ? 'none' : 'flex';
-  table.style.display  = hasCols ? '' : 'none';
-  if (!hasCols) return;
+  const hasCols=S.columns.length>0;
+  empty.style.display=hasCols?'none':'flex';
+  table.style.display=hasCols?'':'none';
+  if(!hasCols) return;
 
   // THEAD
-  let hdr = '<tr><th class="rn-th">#</th>';
-  S.columns.forEach((col, ci) => {
-    if (col.props?.hidden) return;
-    const active = ci === S.activeCol ? 'col-active' : '';
-    const w = col.props?.width ? `style="width:${col.props.width}px;min-width:${col.props.width}px"` : '';
-    hdr += `<th class="${active}" data-ci="${ci}" ${w}>
+  let hdr='<tr><th class="rn-th">#</th>';
+  S.columns.forEach((col,ci)=>{
+    if(col.props?.hidden) return;
+    const active=ci===S.activeCol?'col-active':'';
+    const w=col.props?.width?`style="width:${col.props.width}px;min-width:${col.props.width}px"`:'';
+    hdr+=`<th class="${active}" data-ci="${ci}" ${w}>
       <div class="th-inner" onclick="openProps(${ci})">
         <span class="th-name">${esc(col.name)}</span>
         <span class="type-chip tc-${col.type}">${TYPE_NAME[col.type].slice(0,3)}</span>
       </div>
       <div class="th-acts">
-        <button class="btn btn-xs btn-icon" onclick="event.stopPropagation();sortByCol(${ci},1)" title="↑">↑</button>
-        <button class="btn btn-xs btn-icon" onclick="event.stopPropagation();sortByCol(${ci},-1)" title="↓">↓</button>
-        <button class="btn btn-xs btn-danger btn-icon" onclick="event.stopPropagation();removeCol(${ci})" title="remove">✕</button>
+        <button class="btn btn-xs btn-icon" onclick="event.stopPropagation();sortByCol(${ci},1)" title="asc">↑</button>
+        <button class="btn btn-xs btn-icon" onclick="event.stopPropagation();sortByCol(${ci},-1)" title="desc">↓</button>
+        <button class="btn btn-xs btn-danger btn-icon" onclick="event.stopPropagation();removeCol(${ci})" title="delete">✕</button>
       </div>
     </th>`;
   });
-  hdr += '</tr>';
-  thead.innerHTML = hdr;
+  hdr+='</tr>';
+  thead.innerHTML=hdr;
 
   // TBODY
-  const term = S.filter.toLowerCase();
-  tbody.innerHTML = '';
-  S.rows.forEach((row, ri) => {
-    if (term && !row.some(v => String(v).toLowerCase().includes(term))) return;
-    const tr = document.createElement('tr');
-    if (S.selected.has(ri)) tr.classList.add('sel');
-    tr.dataset.ri = ri;
-    tr.addEventListener('click', e => {
-      if (['INPUT','SELECT','BUTTON'].includes(e.target.tagName)) return;
+  const term=S.filter.toLowerCase();
+  tbody.innerHTML='';
+  S.rows.forEach((row,ri)=>{
+    if(term && !row.some(v=>String(v).toLowerCase().includes(term))) return;
+    const tr=document.createElement('tr');
+    if(S.selected.has(ri)) tr.classList.add('sel');
+    tr.dataset.ri=ri;
+    tr.addEventListener('click',e=>{
+      if(['INPUT','SELECT','BUTTON'].includes(e.target.tagName)) return;
       toggleSel(ri);
     });
-    let cells = `<td class="rn-td">${ri+1}</td>`;
-    S.columns.forEach((col, ci) => {
-      if (col.props?.hidden) return;
-      cells += `<td data-ci="${ci}">${makeCellHTML(row[ci], ri, ci, col)}</td>`;
+    let cells=`<td class="rn-td">${ri+1}</td>`;
+    S.columns.forEach((col,ci)=>{
+      if(col.props?.hidden) return;
+      const align=col.props?.align?`style="text-align:${col.props.align}"`:''
+      cells+=`<td data-ci="${ci}" ${align}>${makeCellHTML(row[ci],ri,ci,col)}</td>`;
     });
-    tr.innerHTML = cells;
+    tr.innerHTML=cells;
     tbody.appendChild(tr);
-    // post-process fonts
-    S.columns.forEach((col, ci) => {
-      if (col.type === TYPE.FONT && row[ci]) {
+    S.columns.forEach((col,ci)=>{
+      if(col.type===TYPE.FONT&&row[ci]){
         loadFont(row[ci]);
-        const el = tr.querySelector(`td[data-ci="${ci}"] .font-prev`);
-        if (el) el.style.fontFamily = `'${row[ci]}',sans-serif`;
+        const el=tr.querySelector(`td[data-ci="${ci}"] .font-prev`);
+        if(el) el.style.fontFamily=`'${row[ci]}',sans-serif`;
       }
     });
   });
 }
 
-function makeCellHTML(val, ri, ci, col) {
-  const t = col.type;
-  const v = val == null ? '' : val;
-
-  if (t === TYPE.BOOL) {
-    const on = !!val;
+function makeCellHTML(val,ri,ci,col){
+  const t=col.type,v=val==null?'':val;
+  if(t===TYPE.BOOL){
+    const on=!!val;
     return `<div class="ci-bool ${on?'on':'off'}" onclick="toggleBool(${ri},${ci})">${on?'✓':'○'}</div>`;
   }
-  if (t === TYPE.IMAGE_URL) {
-    const url = String(v);
-    const thumb = url
-      ? `<img class="img-thumb" src="${esc(url)}" onerror="this.classList.add('err')">`
-      : `<div style="width:40px;height:30px;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:9px">IMG</div>`;
-    return `<div class="ci-img">${thumb}<input class="ci" data-r="${ri}" data-c="${ci}" placeholder="https://…" value="${esc(url)}" oninput="cellInput(this,${ri},${ci})" onfocus="focusCell(this)" style="font-size:10px;color:var(--pink)"></div>`;
+  if(t===TYPE.IMAGE_URL){
+    const url=String(v);
+    const thumb=url
+      ?`<img class="img-thumb" src="${esc(url)}" onerror="this.style.display='none'">`
+      :`<div style="width:38px;height:28px;border:1px dashed var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--text4);font-size:8px;flex-shrink:0">IMG</div>`;
+    return `<div class="ci-img">${thumb}<input class="ci" data-r="${ri}" data-c="${ci}" placeholder="https://…" value="${esc(url)}" oninput="cellInput(this,${ri},${ci})" onfocus="focusCell(this)" style="font-size:9px;color:var(--pink)"></div>`;
   }
-  if (t === TYPE.COLOR) {
-    const cv = String(v) || '#3b82f6';
-    const safeColor = isValidColor(cv) ? cv : '#3b82f6';
+  if(t===TYPE.COLOR){
+    const cv=String(v)||'#4f8fff';
+    const safe=isValidColor(cv)?cv:'#4f8fff';
     return `<div class="ci-color">
-      <input type="color" class="color-sw" value="${safeColor}" oninput="colorPick(this,${ri},${ci})">
-      <input class="ci" data-r="${ri}" data-c="${ci}" placeholder="#rrggbb" value="${esc(String(v))}" oninput="cellInput(this,${ri},${ci});syncSwatch(this)" onfocus="focusCell(this)" style="font-size:11px">
+      <input type="color" class="color-sw" value="${safe}" oninput="colorPick(this,${ri},${ci})">
+      <input class="ci" data-r="${ri}" data-c="${ci}" placeholder="#rrggbb" value="${esc(String(v))}" oninput="cellInput(this,${ri},${ci});syncSwatch(this)" onfocus="focusCell(this)" style="font-size:10px">
     </div>`;
   }
-  if (t === TYPE.DATE) {
+  if(t===TYPE.DATE){
     return `<input type="date" class="ci" data-r="${ri}" data-c="${ci}" value="${esc(String(v))}" oninput="cellInput(this,${ri},${ci})" onfocus="focusCell(this)" style="color:var(--accent3);padding:5px 7px">`;
   }
-  if (t === TYPE.FONT) {
-    const fv = String(v);
+  if(t===TYPE.FONT){
+    const fv=String(v);
     return `<div class="ci-font">
-      <div class="font-prev">${fv || '—'}</div>
-      <input class="ci" data-r="${ri}" data-c="${ci}" placeholder="e.g. Pacifico" value="${esc(fv)}" oninput="fontInput(this,${ri},${ci})" onfocus="focusCell(this)" style="font-size:10px;color:var(--accent2);padding:2px 0 0">
+      <div class="font-prev">${fv||'—'}</div>
+      <input class="ci" data-r="${ri}" data-c="${ci}" placeholder="e.g. Pacifico" value="${esc(fv)}" oninput="fontInput(this,${ri},${ci})" onfocus="focusCell(this)" style="font-size:9px;color:var(--accent2)">
     </div>`;
   }
-  const isNum = t === TYPE.INT32 || t === TYPE.FLOAT64;
+  const isNum=t===TYPE.INT32||t===TYPE.FLOAT64;
   return `<input class="ci" data-r="${ri}" data-c="${ci}" placeholder="${t===TYPE.INT32?'0':t===TYPE.FLOAT64?'0.0':''}" value="${esc(String(v))}" oninput="cellInput(this,${ri},${ci})" onfocus="focusCell(this)" style="${isNum?'text-align:right;color:var(--accent3)':''}">`;
 }
 
-function focusCell(el) {
-  document.querySelectorAll('.focused').forEach(e => e.classList.remove('focused'));
+function focusCell(el){
+  document.querySelectorAll('.focused').forEach(e=>e.classList.remove('focused'));
   el.closest('td')?.classList.add('focused');
 }
-function cellInput(el, r, c) {
-  S.rows[r][c] = el.value;
-  if (S.hexOpen) renderHex();
-  if (S.cipherOpen) renderCipher();
+function cellInput(el,r,c){
+  S.rows[r][c]=el.value;
+  if(S.hexOpen) renderHex();
+  if(S.cipherOpen) renderCipher();
+  if(S.tblyOpen) renderTblyPreview();
   updateStatus();
 }
-function fontInput(el, r, c) {
-  S.rows[r][c] = el.value;
-  loadFont(el.value);
-  const prev = el.closest('.ci-font')?.querySelector('.font-prev');
-  if (prev) { prev.textContent = el.value || '—'; prev.style.fontFamily = el.value ? `'${el.value}',sans-serif` : ''; }
-  if (S.hexOpen) renderHex();
-  if (S.cipherOpen) renderCipher();
+function fontInput(el,r,c){
+  S.rows[r][c]=el.value; loadFont(el.value);
+  const prev=el.closest('.ci-font')?.querySelector('.font-prev');
+  if(prev){prev.textContent=el.value||'—';prev.style.fontFamily=el.value?`'${el.value}',sans-serif`:'';}
+  if(S.hexOpen) renderHex(); if(S.cipherOpen) renderCipher();
 }
-function colorPick(picker, r, c) {
-  S.rows[r][c] = picker.value;
-  const txt = picker.nextElementSibling;
-  if (txt) txt.value = picker.value;
-  if (S.hexOpen) renderHex();
-  if (S.cipherOpen) renderCipher();
+function colorPick(picker,r,c){
+  S.rows[r][c]=picker.value;
+  const txt=picker.nextElementSibling;
+  if(txt) txt.value=picker.value;
+  if(S.hexOpen) renderHex(); if(S.cipherOpen) renderCipher();
 }
-function syncSwatch(txt) {
-  const sw = txt.previousElementSibling;
-  if (sw && sw.type === 'color' && isValidColor(txt.value)) sw.value = txt.value;
+function syncSwatch(txt){
+  const sw=txt.previousElementSibling;
+  if(sw&&sw.type==='color'&&isValidColor(txt.value)) sw.value=txt.value;
 }
-function isValidColor(c) { try { const s = new Option().style; s.color = c; return s.color !== ''; } catch { return false; } }
-function toggleBool(r, c) { S.rows[r][c] = !S.rows[r][c]; renderTable(); }
+function isValidColor(c){try{const s=new Option().style;s.color=c;return s.color!=='';}catch{return false;}}
+function toggleBool(r,c){snapshot();S.rows[r][c]=!S.rows[r][c];renderTable();}
 
 // ═══════════════════════════════════════════════
 //  SIDEBAR
 // ═══════════════════════════════════════════════
-function buildSidebarHTML() {
-  const colItems = S.columns.length === 0
-    ? '<div style="font-size:10px;color:var(--text3);text-align:center;padding:8px">No columns yet</div>'
-    : S.columns.map((col, ci) => `
-        <div class="col-item${ci===S.activeCol?' active':''}" onclick="openProps(${ci})">
-          <span class="col-name">${esc(col.name)}</span>
-          <span class="type-chip tc-${col.type}">${TYPE_NAME[col.type].slice(0,3)}</span>
-        </div>`).join('');
+function buildSidebarHTML(){
+  const colItems=S.columns.length===0
+    ?'<div style="font-size:10px;color:var(--text3);text-align:center;padding:10px;font-family:var(--font-ui)">No columns yet</div>'
+    :S.columns.map((col,ci)=>`
+      <div class="col-item${ci===S.activeCol?' active':''}" onclick="openProps(${ci})">
+        <span class="col-name">${esc(col.name)}</span>
+        <span class="type-chip tc-${col.type}">${TYPE_NAME[col.type].slice(0,3)}</span>
+      </div>`).join('');
 
-  const sortOpts = S.columns.map((c,i) => `<option value="${i}">${esc(c.name)}</option>`).join('');
+  const sortOpts=S.columns.map((c,i)=>`<option value="${i}">${esc(c.name)}</option>`).join('');
 
   return `
     <div class="sb-sec grow" style="overflow:hidden;display:flex;flex-direction:column">
       <div class="sb-label">Columns</div>
       <div class="col-list">${colItems}</div>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-top:7px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:7px;flex-shrink:0">
         <input type="text" class="new-col-name" placeholder="column_name" maxlength="64">
         <select class="new-col-type">
           <option value="0">STRING — text</option>
@@ -843,7 +1206,7 @@ function buildSidebarHTML() {
           <option value="2">FLOAT64 — decimal</option>
           <option value="3">BOOL — toggle</option>
           <option value="4">IMAGE_URL — image</option>
-          <option value="5">COLOR — color swatch</option>
+          <option value="5">COLOR — swatch</option>
           <option value="6">DATE — date picker</option>
           <option value="7">FONT — Google Font</option>
         </select>
@@ -853,7 +1216,7 @@ function buildSidebarHTML() {
     <div class="sb-sec">
       <div class="sb-label">Rows</div>
       <div class="row-grid">
-        <button class="btn btn-sm" onclick="addRow()">+ Add</button>
+        <button class="btn btn-sm" onclick="addRow()">+ Row</button>
         <button class="btn btn-sm btn-danger" onclick="deleteSelected()">− Delete</button>
         <button class="btn btn-sm" onclick="duplicateSelected()">⎘ Dupe</button>
         <button class="btn btn-sm btn-danger btn-full" onclick="clearAllRows()">✕ Clear All</button>
@@ -861,59 +1224,58 @@ function buildSidebarHTML() {
     </div>
     <div class="sb-sec">
       <div class="sb-label">Sort</div>
-      <div style="display:flex;gap:5px;align-items:center">
-        <select class="sort-sel" style="flex:1">${sortOpts || '<option>—</option>'}</select>
+      <div style="display:flex;gap:4px;align-items:center">
+        <select class="sort-sel" style="flex:1">${sortOpts||'<option>—</option>'}</select>
         <button class="btn btn-sm btn-icon" onclick="sortFromSidebar(1)" title="asc">↑</button>
         <button class="btn btn-sm btn-icon" onclick="sortFromSidebar(-1)" title="desc">↓</button>
       </div>
     </div>
     <div class="sb-sec">
-      <div class="sb-label">Format</div>
-      <div style="font-size:10px;color:var(--text2);line-height:1.9">
-        Mode: <b style="color:var(--text)">${S.currentFmt==='tblx'?'.tblx (Base-8)':'.tbl ('+S.currentFmt+')'}</b><br>
-        Rows: <b style="color:var(--text)">${S.rows.length}</b> &nbsp; Cols: <b style="color:var(--text)">${S.columns.length}</b>
+      <div class="sb-label">Edit</div>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-sm btn-ghost btn-full" onclick="undo()" title="Ctrl+Z">↩ Undo</button>
+        <button class="btn btn-sm btn-ghost btn-full" onclick="redo()" title="Ctrl+Y">↪ Redo</button>
       </div>
     </div>`;
 }
 
-function renderSidebar() {
-  const el = document.getElementById('sb-content');
-  if (el) el.innerHTML = buildSidebarHTML();
+function renderSidebar(){
+  const el=document.getElementById('sb-content');
+  if(el) el.innerHTML=buildSidebarHTML();
   syncMobSidebar();
 }
-
-function syncMobSidebar() {
-  const el = document.getElementById('mob-sidebar-content');
-  if (el) el.innerHTML = buildSidebarHTML();
+function syncMobSidebar(){
+  const el=document.getElementById('mob-sidebar-content');
+  if(el) el.innerHTML=buildSidebarHTML();
 }
 
 // ═══════════════════════════════════════════════
 //  COLUMN ACTIONS
 // ═══════════════════════════════════════════════
-function addColumn(btn) {
-  // btn is inside a sidebar; find sibling inputs
-  const container = btn.closest('.sb-sec') || btn.closest('[id$="sidebar-content"]') || document;
-  const nameEl = container.querySelector('.new-col-name') || document.querySelector('.new-col-name');
-  const typeEl = container.querySelector('.new-col-type') || document.querySelector('.new-col-type');
-  if (!nameEl || !typeEl) return;
-  const name = nameEl.value.trim().replace(/\s+/g,'_');
-  if (!name) { toast('Column name required','err'); return; }
-  if (S.columns.find(c => c.name === name)) { toast('Name already used','err'); return; }
-  const type = parseInt(typeEl.value);
-  const def  = type===TYPE.BOOL ? false : STR_TYPES.has(type) ? '' : 0;
-  S.columns.push({ name, type, props:{ align:'left', hidden:false } });
-  S.rows.forEach(r => r.push(def));
-  nameEl.value = '';
-  render();
-  toast(`Column "${name}" added`,'ok');
+function addColumn(btn){
+  const container=btn.closest('.sb-sec')||btn.closest('[id$="sidebar-content"]')||document;
+  const nameEl=container.querySelector('.new-col-name')||document.querySelector('.new-col-name');
+  const typeEl=container.querySelector('.new-col-type')||document.querySelector('.new-col-type');
+  if(!nameEl||!typeEl) return;
+  const name=nameEl.value.trim().replace(/\s+/g,'_');
+  if(!name){toast('Column name required','err');return;}
+  if(S.columns.find(c=>c.name===name)){toast('Name already used','err');return;}
+  snapshot();
+  const type=parseInt(typeEl.value);
+  const def=type===TYPE.BOOL?false:STR_TYPES.has(type)?'':0;
+  S.columns.push({name,type,props:{align:'left',hidden:false}});
+  S.rows.forEach(r=>r.push(def));
+  nameEl.value='';
+  render(); toast(`Column "${name}" added (${TYPE_NAME[type]})`,'ok');
 }
 
-function removeCol(ci) {
-  const name = S.columns[ci].name;
-  S.columns.splice(ci, 1);
-  S.rows.forEach(r => r.splice(ci, 1));
-  if (S.activeCol === ci) S.activeCol = -1;
-  else if (S.activeCol > ci) S.activeCol--;
+function removeCol(ci){
+  snapshot();
+  const name=S.columns[ci].name;
+  S.columns.splice(ci,1);
+  S.rows.forEach(r=>r.splice(ci,1));
+  if(S.activeCol===ci) S.activeCol=-1;
+  else if(S.activeCol>ci) S.activeCol--;
   render(); renderProps();
   toast(`"${name}" removed`,'info');
 }
@@ -921,138 +1283,158 @@ function removeCol(ci) {
 // ═══════════════════════════════════════════════
 //  ROW ACTIONS
 // ═══════════════════════════════════════════════
-function addRow() {
-  if (S.columns.length === 0) { toast('Add a column first','err'); return; }
-  S.rows.push(S.columns.map(col => col.type===TYPE.BOOL ? false : STR_TYPES.has(col.type) ? '' : 0));
-  render();
-  document.getElementById('table-vp').scrollTop = 999999;
+function addRow(){
+  if(S.columns.length===0){toast('Add a column first','err');return;}
+  snapshot();
+  S.rows.push(S.columns.map(col=>col.type===TYPE.BOOL?false:STR_TYPES.has(col.type)?'':0));
+  renderTable(); renderSidebar(); updateStatus();
+  document.getElementById('table-vp').scrollTop=999999;
 }
 
-function deleteSelected() {
-  if (S.selected.size === 0) { toast('Select rows first','err'); return; }
-  S.rows = S.rows.filter((_, i) => !S.selected.has(i));
-  S.selected.clear();
-  render(); toast('Rows deleted','info');
+function deleteSelected(){
+  if(S.selected.size===0){toast('Select rows first','err');return;}
+  snapshot();
+  const n=S.selected.size;
+  S.rows=S.rows.filter((_,i)=>!S.selected.has(i));
+  S.selected.clear(); render(); toast(`${n} row(s) deleted`,'info');
 }
 
-function duplicateSelected() {
-  if (S.selected.size === 0) { toast('Select rows first','err'); return; }
-  const dupes = [...S.selected].sort((a,b)=>a-b).map(i => [...S.rows[i]]);
+function duplicateSelected(){
+  if(S.selected.size===0){toast('Select rows first','err');return;}
+  snapshot();
+  const dupes=[...S.selected].sort((a,b)=>a-b).map(i=>[...S.rows[i]]);
   S.rows.push(...dupes);
-  S.selected.clear();
-  render(); toast(`Duplicated ${dupes.length} row(s)`,'ok');
+  S.selected.clear(); render(); toast(`Duplicated ${dupes.length} row(s)`,'ok');
 }
 
-function clearAllRows() {
-  if (!S.rows.length) return;
-  if (!confirm(`Clear all ${S.rows.length} rows?`)) return;
-  S.rows = []; S.selected.clear();
-  render(); toast('Cleared','info');
+function clearAllRows(){
+  if(!S.rows.length) return;
+  if(!confirm(`Clear all ${S.rows.length} rows?`)) return;
+  snapshot();
+  S.rows=[]; S.selected.clear(); render(); toast('All rows cleared','info');
 }
 
 // ═══════════════════════════════════════════════
 //  SELECTION
 // ═══════════════════════════════════════════════
-function toggleSel(ri) {
-  S.selected.has(ri) ? S.selected.delete(ri) : S.selected.add(ri);
-  const tr = document.querySelector(`tr[data-ri="${ri}"]`);
-  if (tr) tr.classList.toggle('sel', S.selected.has(ri));
-  document.getElementById('sel-info').textContent = S.selected.size ? `${S.selected.size} selected` : '';
+function toggleSel(ri){
+  S.selected.has(ri)?S.selected.delete(ri):S.selected.add(ri);
+  const tr=document.querySelector(`tr[data-ri="${ri}"]`);
+  if(tr) tr.classList.toggle('sel',S.selected.has(ri));
+  document.getElementById('sel-info').textContent=S.selected.size?`${S.selected.size} selected`:'';
 }
-function selectAll()  { S.rows.forEach((_,i) => S.selected.add(i)); render(); }
-function deselectAll(){ S.selected.clear(); document.getElementById('sel-info').textContent=''; render(); }
+function selectAll(){S.rows.forEach((_,i)=>S.selected.add(i));render();}
+function deselectAll(){S.selected.clear();document.getElementById('sel-info').textContent='';render();}
 
 // ═══════════════════════════════════════════════
 //  SORT / FILTER
 // ═══════════════════════════════════════════════
-function sortByCol(ci, dir) {
-  flushCellInputs();
-  S.rows.sort((a, b) => {
-    const va = a[ci], vb = b[ci];
-    if (typeof va === 'boolean') return (va===vb?0:va?-1:1)*dir;
-    if (typeof va === 'number')  return (va - vb) * dir;
-    return String(va).localeCompare(String(vb)) * dir;
+function sortByCol(ci,dir){
+  flushCellInputs(); snapshot();
+  S.rows.sort((a,b)=>{
+    const va=a[ci],vb=b[ci];
+    if(typeof va==='boolean') return (va===vb?0:va?-1:1)*dir;
+    if(typeof va==='number')  return (va-vb)*dir;
+    return String(va).localeCompare(String(vb))*dir;
   });
   render(); toast(`Sorted by "${S.columns[ci]?.name}"`,'info');
 }
-
-function sortFromSidebar(dir) {
-  const sels = document.querySelectorAll('.sort-sel');
-  const sel = sels.length ? sels[0] : null;
-  if (!sel || S.columns.length === 0) return;
-  const ci = parseInt(sel.value);
-  if (!isNaN(ci)) sortByCol(ci, dir);
+function sortFromSidebar(dir){
+  const sel=document.querySelector('.sort-sel');
+  if(!sel||S.columns.length===0) return;
+  const ci=parseInt(sel.value);
+  if(!isNaN(ci)) sortByCol(ci,dir);
 }
-
-function onSearch() { S.filter = document.getElementById('search-in').value; renderTable(); updateStatus(); }
-function clearSearch() { document.getElementById('search-in').value=''; S.filter=''; renderTable(); updateStatus(); }
+function onSearch(){S.filter=document.getElementById('search-in').value;renderTable();updateStatus();}
+function clearSearch(){document.getElementById('search-in').value='';S.filter='';renderTable();updateStatus();}
 
 // ═══════════════════════════════════════════════
 //  HEX VIEWER
 // ═══════════════════════════════════════════════
-function toggleHex() {
-  S.hexOpen = !S.hexOpen;
-  document.getElementById('hex-strip').classList.toggle('show', S.hexOpen);
-  document.getElementById('btn-hex').style.color = S.hexOpen ? 'var(--accentL)' : '';
-  if (S.hexOpen) renderHex();
+function toggleHex(){
+  S.hexOpen=!S.hexOpen;
+  document.getElementById('hex-strip').classList.toggle('show',S.hexOpen);
+  document.getElementById('btn-hex').style.color=S.hexOpen?'var(--accentL)':'';
+  if(S.hexOpen) renderHex();
 }
-function renderHex() {
-  const el = document.getElementById('hex-strip');
-  if (S.columns.length === 0) { el.textContent = 'No data.'; return; }
-  const ab = encodeV2();
-  const b  = new Uint8Array(ab);
-  const max = 320;
-  let html = '';
-  for (let i = 0; i < Math.min(b.length, max); i += 16) {
-    const chunk = b.slice(i, i+16);
-    const addr  = i.toString(16).padStart(8,'0').toUpperCase();
-    let hx='', asc='';
-    chunk.forEach((byte, idx) => {
-      const h   = byte.toString(16).padStart(2,'0').toUpperCase();
-      const abs = i + idx;
-      const cls = abs<3?'hb-magic':abs===3?'hb-ver':'';
-      hx  += `<span class="${cls}">${h}</span> `;
-      asc += (byte>=32&&byte<127) ? String.fromCharCode(byte) : '·';
+function renderHex(){
+  const el=document.getElementById('hex-strip');
+  if(S.columns.length===0){el.textContent='No data.';return;}
+  flushCellInputs();
+  const b=new Uint8Array(encodeV2(S.columns,S.rows,S.meta));
+  const max=256; let html='';
+  for(let i=0;i<Math.min(b.length,max);i+=16){
+    const chunk=b.slice(i,i+16);
+    const addr=i.toString(16).padStart(8,'0').toUpperCase();
+    let hx='',asc='';
+    chunk.forEach((byte,idx)=>{
+      const h=byte.toString(16).padStart(2,'0').toUpperCase();
+      const abs=i+idx;
+      const cls=abs<3?'hb-magic':abs===3?'hb-ver':'';
+      hx+=`<span class="${cls}">${h}</span> `;
+      asc+=(byte>=32&&byte<127)?String.fromCharCode(byte):'·';
     });
-    html += `<div class="hex-row"><span class="hex-addr">${addr}</span><span class="hex-bytes">${hx}</span><span class="hex-asc">${asc}</span></div>`;
+    html+=`<div class="hex-row"><span class="hex-addr">${addr}</span><span class="hex-bytes">${hx}</span><span class="hex-asc">${asc}</span></div>`;
   }
-  if (b.length > max) html += `<div style="color:var(--text3)">… ${b.length-max} more bytes (${fmtBytes(ab.byteLength)} total)</div>`;
-  el.innerHTML = html;
+  if(b.length>max) html+=`<div style="color:var(--text3);font-family:var(--font-ui)">… ${b.length-max} more bytes (${fmtBytes(b.length)} total)</div>`;
+  el.innerHTML=html;
 }
 
 // ═══════════════════════════════════════════════
 //  CIPHER PREVIEW
 // ═══════════════════════════════════════════════
-function toggleCipher() {
-  S.cipherOpen = !S.cipherOpen;
-  document.getElementById('cipher-strip').classList.toggle('show', S.cipherOpen);
-  document.getElementById('btn-cipher').style.color = S.cipherOpen ? 'var(--tblxL)' : '';
-  if (S.cipherOpen) renderCipher();
+function toggleCipher(){
+  S.cipherOpen=!S.cipherOpen;
+  document.getElementById('cipher-strip').classList.toggle('show',S.cipherOpen);
+  document.getElementById('btn-cipher').style.color=S.cipherOpen?'var(--tblxL)':'';
+  if(S.cipherOpen) renderCipher();
 }
-function renderCipher() {
-  const el = document.getElementById('cipher-text');
-  if (S.columns.length === 0) { el.textContent = 'No data.'; return; }
-  const full   = encodeTblx();
-  const lines  = full.split('\n');
-  const body   = lines.slice(1).join('');
-  el.textContent = body.slice(0, 512) + (body.length > 512 ? '…' : '');
+function renderCipher(){
+  const el=document.getElementById('cipher-text');
+  if(S.columns.length===0){el.textContent='No data.';return;}
+  flushCellInputs();
+  const full=encodeTblx(S.columns,S.rows,S.meta);
+  const body=full.split('\n').slice(1).join('');
+  el.textContent=body.slice(0,600)+(body.length>600?'…':'');
 }
 
 // ═══════════════════════════════════════════════
-//  RIGHT PANEL
+//  TBLY PREVIEW
 // ═══════════════════════════════════════════════
-function openProps(ci) { S.activeCol = ci; renderTable(); renderProps(); }
-function closeProps()  {
-  S.activeCol = -1; renderTable();
-  document.getElementById('rp-body').innerHTML = '<p style="font-size:11px;color:var(--text3)">Click a column header to edit its properties.</p>';
-  document.getElementById('rp-title').textContent = 'Column Properties';
+function toggleTbly(){
+  S.tblyOpen=!S.tblyOpen;
+  document.getElementById('tbly-strip').classList.toggle('show',S.tblyOpen);
+  document.getElementById('btn-tbly').style.color=S.tblyOpen?'var(--tblyL)':'';
+  if(S.tblyOpen) renderTblyPreview();
 }
-function renderProps() {
-  if (S.activeCol < 0 || S.activeCol >= S.columns.length) return;
-  const col = S.columns[S.activeCol];
-  const p   = col.props || {};
-  document.getElementById('rp-title').textContent = col.name;
-  document.getElementById('rp-body').innerHTML = `
+function renderTblyPreview(){
+  const el=document.getElementById('tbly-info');
+  if(S.columns.length===0){el.textContent='No data.';return;}
+  flushCellInputs();
+  const tblxBody=encodeTblx(S.columns,S.rows,S.meta);
+  const css=generateThemeCSS(S.meta,S.columns);
+  const tblxSize=fmtBytes(new Blob([tblxBody]).size);
+  const cssSize=fmtBytes(new Blob([css]).size);
+  el.innerHTML=`<span style="color:var(--text2)">Bundle contents:</span> &nbsp;
+    <span style="color:var(--tblyL)">data.tblx</span> <span style="color:var(--text3)">(~${tblxSize})</span> &nbsp;+&nbsp;
+    <span style="color:var(--accentL)">theme.css</span> <span style="color:var(--text3)">(~${cssSize})</span> &nbsp;
+    <span style="color:var(--text2)">→ packaged as .tbly (ZIP)</span>`;
+}
+
+// ═══════════════════════════════════════════════
+//  RIGHT PANEL PROPS
+// ═══════════════════════════════════════════════
+function openProps(ci){S.activeCol=ci;renderTable();renderProps();}
+function closeProps(){
+  S.activeCol=-1;renderTable();
+  document.getElementById('rp-body').innerHTML='<p style="font-size:10px;color:var(--text3);font-family:var(--font-ui);line-height:1.8">Click a column header to inspect and edit its properties.</p>';
+  document.getElementById('rp-title').textContent='COLUMN PROPS';
+}
+function renderProps(){
+  if(S.activeCol<0||S.activeCol>=S.columns.length) return;
+  const col=S.columns[S.activeCol], p=col.props||{};
+  document.getElementById('rp-title').textContent=col.name.toUpperCase();
+  document.getElementById('rp-body').innerHTML=`
     <div class="rp-field"><label>Name</label>
       <input type="text" value="${esc(col.name)}" oninput="setPropName(this.value)">
     </div>
@@ -1063,7 +1445,7 @@ function renderProps() {
     </div>
     <div class="divider"></div>
     <div class="rp-2col">
-      <div class="rp-field"><label>Width (px)</label>
+      <div class="rp-field"><label>Width px</label>
         <input type="number" value="${p.width||''}" placeholder="auto" min="40" max="800" oninput="setPropNum('width',this.value)">
       </div>
       <div class="rp-field"><label>Align</label>
@@ -1079,258 +1461,382 @@ function renderProps() {
       <label class="tog"><input type="checkbox"${p.hidden?' checked':''} onchange="setPropKey('hidden',this.checked)"><span class="tog-track"></span><span class="tog-thumb"></span></label>
     </div>
     <div class="divider"></div>
-    ${col.type===TYPE.FONT?`<div class="rp-field"><label>Font Preview</label>
+    ${col.type===TYPE.FONT?`
+    <div class="rp-field"><label>Font Preview</label>
       <input type="text" placeholder="Type a font name…" oninput="previewFont(this.value)">
-      <div id="font-pv" style="margin-top:6px;font-size:15px;color:var(--text2)">The quick brown fox</div>
+      <div id="font-pv" style="margin-top:6px;font-size:14px;color:var(--text2)">The quick brown fox</div>
     </div><div class="divider"></div>`:''}
-    <button class="btn btn-danger btn-sm" onclick="removeCol(${S.activeCol})">Remove Column</button>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-full" onclick="moveCol(${S.activeCol},-1)">← Move</button>
+      <button class="btn btn-sm btn-full" onclick="moveCol(${S.activeCol},1)">Move →</button>
+    </div>
+    <button class="btn btn-danger btn-sm btn-full" onclick="removeCol(${S.activeCol})">Remove Column</button>
   `;
 }
-
-function setPropName(val) {
-  const t = val.trim().replace(/\s+/g,'_');
-  if (!t) return;
-  S.columns[S.activeCol].name = t;
-  renderSidebar(); renderTable();
+function setPropName(val){
+  const t=val.trim().replace(/\s+/g,'_');
+  if(!t) return;
+  S.columns[S.activeCol].name=t;
+  renderSidebar();renderTable();
 }
-function setPropType(val) {
-  const t = parseInt(val);
-  S.columns[S.activeCol].type = t;
-  const def = t===TYPE.BOOL ? false : STR_TYPES.has(t) ? '' : 0;
-  S.rows.forEach(r => { r[S.activeCol] = def; });
-  render(); renderProps();
-  toast(`Type → ${TYPE_NAME[t]}`,'info');
+function setPropType(val){
+  snapshot();
+  const t=parseInt(val);
+  S.columns[S.activeCol].type=t;
+  const def=t===TYPE.BOOL?false:STR_TYPES.has(t)?'':0;
+  S.rows.forEach(r=>{r[S.activeCol]=def;});
+  render();renderProps();toast(`Type → ${TYPE_NAME[t]}`,'info');
 }
-function setPropNum(key, val) {
-  S.columns[S.activeCol].props[key] = val ? parseInt(val)||null : null;
-}
-function setPropKey(key, val) {
-  S.columns[S.activeCol].props[key] = val;
-  if (key === 'hidden') render();
-}
-function previewFont(name) {
+function setPropNum(key,val){S.columns[S.activeCol].props[key]=val?parseInt(val)||null:null;}
+function setPropKey(key,val){S.columns[S.activeCol].props[key]=val;if(key==='hidden') render();}
+function previewFont(name){
   loadFont(name);
-  const el = document.getElementById('font-pv');
-  if (el) el.style.fontFamily = name ? `'${name}',sans-serif` : '';
+  const el=document.getElementById('font-pv');
+  if(el) el.style.fontFamily=name?`'${name}',sans-serif`:'';
+}
+function moveCol(ci,dir){
+  const ni=ci+dir;
+  if(ni<0||ni>=S.columns.length) return;
+  snapshot();
+  [S.columns[ci],S.columns[ni]]=[S.columns[ni],S.columns[ci]];
+  S.rows.forEach(r=>{[r[ci],r[ni]]=[r[ni],r[ci]];});
+  S.activeCol=ni;
+  render();renderProps();
 }
 
 // ═══════════════════════════════════════════════
 //  META
 // ═══════════════════════════════════════════════
-function showMeta() {
-  document.getElementById('m-title').value = S.meta.title || '';
-  document.getElementById('m-desc').value  = S.meta.description || '';
-  document.getElementById('m-font').value  = S.meta.fontFamily || '';
-  document.getElementById('m-theme').value = S.meta.theme || 'dark';
-  document.getElementById('m-fonts').value = (S.meta.customFonts || []).join(', ');
+function showMeta(){
+  document.getElementById('m-title').value=S.meta.title||'';
+  document.getElementById('m-desc').value=S.meta.description||'';
+  document.getElementById('m-author').value=S.meta.author||'';
+  document.getElementById('m-font').value=S.meta.fontFamily||'';
+  document.getElementById('m-theme').value=S.meta.theme||'dark';
+  document.getElementById('m-accent').value=S.meta.accentColor||'#4f8fff';
+  document.getElementById('m-fonts').value=(S.meta.customFonts||[]).join(', ');
   openModal('modal-meta');
 }
-function saveMeta() {
-  S.meta.title       = document.getElementById('m-title').value.trim();
-  S.meta.description = document.getElementById('m-desc').value.trim();
-  S.meta.fontFamily  = document.getElementById('m-font').value.trim();
-  S.meta.theme       = document.getElementById('m-theme').value;
-  S.meta.customFonts = document.getElementById('m-fonts').value.split(',').map(s=>s.trim()).filter(Boolean);
+function saveMeta(){
+  S.meta.title       =document.getElementById('m-title').value.trim();
+  S.meta.description =document.getElementById('m-desc').value.trim();
+  S.meta.author      =document.getElementById('m-author').value.trim();
+  S.meta.fontFamily  =document.getElementById('m-font').value.trim();
+  S.meta.theme       =document.getElementById('m-theme').value;
+  S.meta.accentColor =document.getElementById('m-accent').value;
+  S.meta.customFonts =document.getElementById('m-fonts').value.split(',').map(s=>s.trim()).filter(Boolean);
   closeModal('modal-meta');
-  applyMeta();
-  toast('Settings saved','ok');
+  applyMeta();toast('Settings saved','ok');
 }
-function applyMeta() {
-  if (S.meta.fontFamily) { loadFont(S.meta.fontFamily); document.getElementById('editor-table').style.fontFamily = `'${S.meta.fontFamily}',monospace`; }
-  if (S.meta.customFonts) S.meta.customFonts.forEach(loadFont);
-  document.getElementById('st-file').textContent = S.meta.title || S.currentFile;
+function applyMeta(){
+  if(S.meta.fontFamily){loadFont(S.meta.fontFamily);document.getElementById('editor-table').style.fontFamily=`'${S.meta.fontFamily}',monospace`;}
+  if(S.meta.customFonts) S.meta.customFonts.forEach(loadFont);
+  document.getElementById('st-file').textContent=S.meta.title||S.currentFile;
+}
+
+// ═══════════════════════════════════════════════
+//  CSV IMPORT / EXPORT
+// ═══════════════════════════════════════════════
+function importCSV(){
+  const text=document.getElementById('csv-input').value.trim();
+  if(!text){toast('No CSV data','err');return;}
+  const delim=document.getElementById('csv-delim').value;
+  const hasHeader=document.getElementById('csv-header').value==='1';
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){toast('Empty CSV','err');return;}
+  snapshot();
+
+  const parseRow=l=>{
+    const cells=[];let cur='',inQ=false;
+    for(let i=0;i<l.length;i++){
+      if(l[i]==='"'){inQ=!inQ;}
+      else if(l[i]===delim&&!inQ){cells.push(cur.trim());cur='';}
+      else cur+=l[i];
+    }
+    cells.push(cur.trim());
+    return cells;
+  };
+
+  const header=hasHeader?parseRow(lines[0]):lines[0].split(delim).map((_,i)=>`col_${i+1}`);
+  const dataLines=hasHeader?lines.slice(1):lines;
+
+  // Replace or merge?
+  if(S.columns.length>0&&!confirm('Import will replace current table. Continue?')) return;
+
+  S.columns=header.map(h=>({name:h.replace(/\s+/g,'_').replace(/[^\w]/g,'')||'col',type:TYPE.STRING,props:{}}));
+  S.rows=dataLines.map(l=>parseRow(l).map((v,i)=>i<S.columns.length?v:''));
+  S.selected.clear();
+  closeModal('modal-csv');
+  render();toast(`Imported ${S.rows.length} rows, ${S.columns.length} cols`,'ok');
+}
+
+function doExport(){
+  if(S.columns.length===0){toast('No data to export','err');return;}
+  flushCellInputs();
+  const fmt=document.getElementById('export-fmt').value;
+  const fname=(S.meta.title||S.currentFile||'table');
+  let content='',ext='',mime='text/plain';
+
+  if(fmt==='csv'||fmt==='tsv'){
+    const sep=fmt==='tsv'?'\t':',';
+    const q=v=>typeof v==='string'&&v.includes(sep)?`"${v.replace(/"/g,'""')}"`:v;
+    content=S.columns.map(c=>q(c.name)).join(sep)+'\n';
+    content+=S.rows.map(r=>S.columns.map((_,ci)=>q(r[ci]??'')).join(sep)).join('\n');
+    ext=fmt;mime='text/csv';
+  } else if(fmt==='json'){
+    content=JSON.stringify(S.rows.map(r=>Object.fromEntries(S.columns.map((c,i)=>[c.name,r[i]]))),null,2);
+    ext='json';mime='application/json';
+  } else if(fmt==='jsonl'){
+    content=S.rows.map(r=>JSON.stringify(Object.fromEntries(S.columns.map((c,i)=>[c.name,r[i]])))).join('\n');
+    ext='jsonl';mime='application/json';
+  } else if(fmt==='sql'){
+    const tbl=fname.replace(/\W/g,'_');
+    const cols=S.columns.map(c=>`\`${c.name}\``).join(', ');
+    content=`-- Generated by TBL Studio v4\nINSERT INTO \`${tbl}\` (${cols}) VALUES\n`;
+    content+=S.rows.map(r=>'  ('+S.columns.map((_,ci)=>{
+      const v=r[ci];
+      return v==null?'NULL':typeof v==='boolean'?v?'1':'0':typeof v==='number'?v:`'${String(v).replace(/'/g,"''")}'`;
+    }).join(', ')+')').join(',\n')+';';
+    ext='sql';
+  }
+
+  const blob=new Blob([content],{type:mime});
+  download(blob,`${fname}.${ext}`);
+  closeModal('modal-export');
+  toast(`Exported as .${ext} (${fmtBytes(blob.size)})`,'ok');
 }
 
 // ═══════════════════════════════════════════════
 //  SAVE / LOAD
 // ═══════════════════════════════════════════════
-function saveFile(fmt) {
-  if (S.columns.length === 0) { toast('Add columns before saving','err'); return; }
+function saveFile(fmt){
+  if(S.columns.length===0){toast('Add columns before saving','err');return;}
   flushCellInputs();
+  progress(0);
+  const baseName=S.meta.title||S.currentFile||'table';
 
-  if (fmt === 'tblx') {
-    const text = encodeTblx();
-    const blob = new Blob([text], { type:'text/plain' });
-    download(blob, (S.meta.title||S.currentFile||'table')+'.tblx');
-    S.currentFmt = 'tblx';
-    toast(`Saved .tblx (Base-8 cipher) — ${fmtBytes(blob.size)}`,'tblx');
-  } else if (fmt === 'v1') {
-    const ab  = encodeV1();
-    const blob = new Blob([ab], { type:'application/octet-stream' });
-    download(blob, (S.meta.title||S.currentFile||'table')+'.tbl');
-    S.currentFmt = 'v1';
-    toast(`Saved legacy .tbl v1 — ${fmtBytes(blob.size)}`,'info');
-  } else {
-    const ab   = encodeV2();
-    const blob = new Blob([ab], { type:'application/octet-stream' });
-    download(blob, (S.meta.title||S.currentFile||'table')+'.tbl');
-    S.currentFmt = 'v2';
-    toast(`Saved .tbl v2 — ${fmtBytes(blob.size)}`,'ok');
+  if(fmt==='tbly'){
+    progress(30);
+    encodeTbly(S.columns,S.rows,S.meta).then(blob=>{
+      progress(80);
+      download(blob,baseName+'.tbly');
+      S.currentFmt='tbly';
+      updateSaveBtn();
+      progress(100);
+      render();toast(`Saved .tbly bundle (${fmtBytes(blob.size)}) — data.tblx + theme.css inside`,'tbly');
+    }).catch(e=>toast('Error: '+e.message,'err'));
+    return;
   }
-  render();
+
+  if(fmt==='tblx'){
+    progress(50);
+    const text=encodeTblx(S.columns,S.rows,S.meta);
+    const blob=new Blob([text],{type:'text/plain'});
+    download(blob,baseName+'.tblx');
+    S.currentFmt='tblx'; updateSaveBtn();
+    progress(100);
+    render();toast(`Saved .tblx (${fmtBytes(blob.size)}) — Base-8 cipher`,'tblx');
+  } else {
+    progress(50);
+    const ab=encodeV2(S.columns,S.rows,S.meta);
+    const blob=new Blob([ab],{type:'application/octet-stream'});
+    download(blob,baseName+'.tbl');
+    S.currentFmt='tbl'; updateSaveBtn();
+    progress(100);
+    render();toast(`Saved .tbl binary (${fmtBytes(blob.size)})`,'ok');
+  }
 }
 
-function download(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const a   = Object.assign(document.createElement('a'), { href:url, download:name });
+function updateSaveBtn(){
+  const btn=document.getElementById('btn-save-main');
+  if(!btn) return;
+  if(S.currentFmt==='tblx'){btn.textContent='⬇ Save .tblx';btn.className='btn btn-amber';}
+  else if(S.currentFmt==='tbly'){btn.textContent='⬇ Save .tbly';btn.className='btn btn-teal';}
+  else{btn.textContent='⬇ Save .tbl';btn.className='btn btn-primary';}
+  // reset onclick
+  btn.onclick=()=>saveFile(S.currentFmt==='tblx'?'tblx':S.currentFmt==='tbly'?'tbly':'tbl');
+}
+
+function download(blob,name){
+  const url=URL.createObjectURL(blob);
+  const a=Object.assign(document.createElement('a'),{href:url,download:name});
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
-function openFile(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const name = file.name;
+function triggerOpen(){document.getElementById('file-input').click();}
 
-  if (name.endsWith('.tblx')) {
-    file.text().then(text => {
-      try {
-        const d = decodeTblx(text);
-        loadState(d, name.replace(/\.tblx$/i,''), 'tblx');
-        toast(`Loaded "${name}" (Base-8 cipher) — ${d.rows.length} rows`,'tblx');
-      } catch(err) { toast('Error: '+err.message,'err'); }
-    });
-  } else {
-    file.arrayBuffer().then(ab => {
-      try {
-        let d, fmt;
-        // try v2 first
-        try { d = decodeV2(ab); fmt='v2'; } catch(_) {
-          // fall back to v1
-          d = decodeV1(ab); fmt='v1';
-        }
-        loadState(d, name.replace(/\.tbl$/i,''), fmt);
-        toast(`Loaded "${name}" (${fmt}) — ${d.rows.length} rows, ${d.columns.length} cols`,'ok');
-      } catch(err) { toast('Error: '+err.message,'err'); }
-    });
-  }
-  e.target.value = '';
+async function openFile(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const name=file.name;
+  progress(20);
+  try{
+    if(name.endsWith('.tbly')){
+      const ab=await file.arrayBuffer();
+      progress(60);
+      const d=await decodeTbly(ab);
+      loadState(d,name.replace(/\.tbly$/i,''),'tbly');
+      toast(`Loaded "${name}" (.tbly bundle) — ${d.rows.length} rows`,'tbly');
+    } else if(name.endsWith('.tblx')){
+      const text=await file.text();
+      progress(60);
+      const d=decodeTblx(text);
+      loadState(d,name.replace(/\.tblx$/i,''),'tblx');
+      toast(`Loaded "${name}" (cipher) — ${d.rows.length} rows, ${d.columns.length} cols`,'tblx');
+    } else {
+      const ab=await file.arrayBuffer();
+      progress(60);
+      let d,fmt;
+      try{d=decodeV2(ab);fmt='tbl';}catch(_){
+        const text=new TextDecoder().decode(ab);
+        if(text.startsWith('TBLX_V1')){d=decodeTblx(text);fmt='tblx';}
+        else if(text.startsWith('TBL1')){
+          const body=text.slice(4);
+          const obj=JSON.parse(body);
+          d={columns:(obj.columns||[]).map(c=>typeof c==='string'?{name:c,type:TYPE.STRING,props:{}}:c),rows:obj.rows||[],meta:obj.meta||{}};
+          fmt='tbl';
+        } else throw new Error('Unknown file format');
+      }
+      loadState(d,name.replace(/\.tbl$/i,''),fmt);
+      toast(`Loaded "${name}" (${fmt}) — ${d.rows.length} rows, ${d.columns.length} cols`,'ok');
+    }
+  } catch(err){toast('Error: '+err.message,'err');}
+  progress(100);
+  e.target.value='';
 }
 
-function loadState(d, filename, fmt) {
-  S.columns = d.columns;
-  S.rows    = d.rows;
-  S.meta    = d.meta || {};
-  S.selected.clear();
-  S.filter   = '';
-  S.activeCol = -1;
-  S.currentFile = filename;
-  S.currentFmt  = fmt;
+function loadState(d,filename,fmt){
+  S.columns=d.columns; S.rows=d.rows; S.meta=d.meta||{};
+  S.selected.clear(); S.filter=''; S.activeCol=-1;
+  S.currentFile=filename; S.currentFmt=fmt;
+  S.undoStack=[]; S.redoStack=[];
+  updateSaveBtn();
   render();
 }
 
-function newTable() {
-  if (!confirm('Start a new table? Unsaved data will be lost.')) return;
-  S.columns=[]; S.rows=[]; S.meta={}; S.selected.clear(); S.filter='';
-  S.activeCol=-1; S.currentFile='untitled'; S.currentFmt='v2';
-  render(); toast('New table','info');
+function newTable(){
+  if(!confirm('Start a new table? Unsaved data will be lost.')) return;
+  S.columns=[];S.rows=[];S.meta={};S.selected.clear();S.filter='';
+  S.activeCol=-1;S.currentFile='untitled';S.currentFmt='tbl';
+  S.undoStack=[];S.redoStack=[];
+  updateSaveBtn();render();toast('New table','info');
 }
 
-function loadSample() {
-  S.columns = [
-    {name:'id',        type:TYPE.INT32,    props:{width:60, align:'right', hidden:false}},
-    {name:'name',      type:TYPE.STRING,   props:{width:140,align:'left',  hidden:false}},
-    {name:'avatar',    type:TYPE.IMAGE_URL,props:{width:200,              hidden:false}},
-    {name:'color',     type:TYPE.COLOR,    props:{width:160,              hidden:false}},
-    {name:'score',     type:TYPE.FLOAT64,  props:{align:'right',          hidden:false}},
-    {name:'active',    type:TYPE.BOOL,     props:{align:'center',width:70,hidden:false}},
-    {name:'joined',    type:TYPE.DATE,     props:{hidden:false}},
-    {name:'ui_font',   type:TYPE.FONT,     props:{width:180,              hidden:false}},
+function loadSample(){
+  S.columns=[
+    {name:'id',       type:TYPE.INT32,    props:{width:55,  align:'right'}},
+    {name:'name',     type:TYPE.STRING,   props:{width:130, align:'left'}},
+    {name:'avatar',   type:TYPE.IMAGE_URL,props:{width:190}},
+    {name:'brand_color',type:TYPE.COLOR,  props:{width:160}},
+    {name:'score',    type:TYPE.FLOAT64,  props:{align:'right'}},
+    {name:'active',   type:TYPE.BOOL,     props:{align:'center',width:65}},
+    {name:'joined',   type:TYPE.DATE,     props:{}},
+    {name:'ui_font',  type:TYPE.FONT,     props:{width:175}},
   ];
-  S.rows = [
-    [1,'Alice Chen',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=alice',  '#3b82f6',98.5, true, '2023-01-15','Pacifico'],
-    [2,'Bob Marsh',   'https://api.dicebear.com/7.x/pixel-art/svg?seed=bob',    '#8b5cf6',77.2, false,'2023-03-22','Bebas Neue'],
-    [3,'Carol Reed',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=carol',  '#10b981',100.0,true, '2022-11-01','Lobster'],
-    [4,'Dan Price',   'https://api.dicebear.com/7.x/pixel-art/svg?seed=dan',    '#f59e0b',42.1, true, '2024-06-10','Orbitron'],
-    [5,'Eve Santos',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=eve',    '#ef4444',55.75,false,'2024-01-28','Playfair Display'],
+  S.rows=[
+    [1,'Alice Chen',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=alice', '#4f8fff',98.5, true, '2023-01-15','Pacifico'],
+    [2,'Bob Marsh',   'https://api.dicebear.com/7.x/pixel-art/svg?seed=bob',   '#a855f7',77.2, false,'2023-03-22','Bebas Neue'],
+    [3,'Carol Reed',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=carol', '#22d3a4',100.0,true, '2022-11-01','Lobster'],
+    [4,'Dan Price',   'https://api.dicebear.com/7.x/pixel-art/svg?seed=dan',   '#fbbf24',42.1, true, '2024-06-10','Orbitron'],
+    [5,'Eve Santos',  'https://api.dicebear.com/7.x/pixel-art/svg?seed=eve',   '#f472b6',55.75,false,'2024-01-28','Playfair Display'],
   ];
-  S.meta = {title:'Team Roster',description:'Sample — all 8 column types',fontFamily:'Outfit',theme:'dark'};
-  S.selected.clear(); S.filter=''; S.activeCol=-1;
-  S.currentFile='team-roster'; S.currentFmt='v2';
-  render(); toast('Sample loaded — try ⬇ Save → .tblx!','ok');
+  S.meta={title:'Team Roster',description:'TBL Studio v4 sample',author:'Studio',fontFamily:'DM Sans',theme:'dark',accentColor:'#4f8fff'};
+  S.selected.clear();S.filter='';S.activeCol=-1;
+  S.currentFile='team-roster';S.currentFmt='tbl';
+  S.undoStack=[];S.redoStack=[];
+  updateSaveBtn();render();toast('Sample loaded — try saving as .tbly!','ok');
 }
 
 // ═══════════════════════════════════════════════
-//  STATUS
+//  STATUS & UTILS
 // ═══════════════════════════════════════════════
-function updateStatus() {
-  const term = S.filter.toLowerCase();
-  let vis = S.rows.length;
-  if (term) vis = S.rows.filter(r => r.some(v => String(v).toLowerCase().includes(term))).length;
-  document.getElementById('st-rows').textContent = S.filter ? `${vis}/${S.rows.length}` : S.rows.length;
-  document.getElementById('st-cols').textContent = S.columns.length;
-  const size = S.columns.length ? fmtBytes(encodeV2().byteLength) : '—';
-  document.getElementById('st-size').textContent = size;
-  const fmt = document.getElementById('st-fmt');
-  if (fmt) {
-    fmt.textContent = S.currentFmt === 'tblx' ? '.tblx' : S.currentFmt;
-    fmt.className   = 'format-badge ' + (S.currentFmt==='v1'?'fb-v1':S.currentFmt==='tblx'?'fb-x':'fb-v2');
+function updateStatus(){
+  const term=S.filter.toLowerCase();
+  let vis=S.rows.length;
+  if(term) vis=S.rows.filter(r=>r.some(v=>String(v).toLowerCase().includes(term))).length;
+  document.getElementById('st-rows').textContent=S.filter?`${vis}/${S.rows.length}`:S.rows.length;
+  document.getElementById('st-cols').textContent=S.columns.length;
+
+  let size='—';
+  if(S.columns.length){
+    try{size=fmtBytes(encodeV2(S.columns,S.rows,S.meta).byteLength);}catch(_){}
   }
-  document.getElementById('st-file').textContent = S.meta.title || S.currentFile;
+  document.getElementById('st-size').textContent=size;
+
+  const fmt=document.getElementById('st-fmt');
+  if(fmt){
+    const labels={tbl:'.tbl',tblx:'.tblx',tbly:'.tbly'};
+    const classes={tbl:'fb-tbl',tblx:'fb-tblx',tbly:'fb-tbly'};
+    fmt.textContent=labels[S.currentFmt]||'.tbl';
+    fmt.className='format-badge '+(classes[S.currentFmt]||'fb-tbl');
+  }
+  document.getElementById('st-file').textContent=S.meta.title||S.currentFile;
 }
 
-function fmtBytes(n) {
-  if (n < 1024)    return n + ' B';
-  if (n < 1048576) return (n/1024).toFixed(1) + ' KB';
-  return (n/1048576).toFixed(2) + ' MB';
+function fmtBytes(n){
+  if(n<1024) return n+' B';
+  if(n<1048576) return (n/1024).toFixed(1)+' KB';
+  return (n/1048576).toFixed(2)+' MB';
 }
-function esc(s) {
+function esc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function progress(pct){
+  const el=document.getElementById('progress-bar');
+  el.style.width=pct+'%';
+  if(pct>=100) setTimeout(()=>{el.style.width='0';},500);
 }
 
 // ═══════════════════════════════════════════════
 //  MODALS
 // ═══════════════════════════════════════════════
-function openModal(id)  { document.getElementById(id)?.classList.add('show'); }
-function closeModal(id) { document.getElementById(id)?.classList.remove('show'); }
-document.querySelectorAll('.overlay').forEach(o =>
-  o.addEventListener('click', e => { if (e.target===o) o.classList.remove('show'); })
+function openModal(id){document.getElementById(id)?.classList.add('show');}
+function closeModal(id){document.getElementById(id)?.classList.remove('show');}
+document.querySelectorAll('.overlay').forEach(o=>
+  o.addEventListener('click',e=>{if(e.target===o) o.classList.remove('show');})
 );
 
 // ═══════════════════════════════════════════════
 //  SAVE DROPDOWN
 // ═══════════════════════════════════════════════
-function toggleSaveDrop(e) { e.stopPropagation(); document.getElementById('save-drop').classList.toggle('show'); }
-function closeSaveDrop()   { document.getElementById('save-drop').classList.remove('show'); }
-document.addEventListener('click', () => closeSaveDrop());
+function toggleSaveDrop(e){e.stopPropagation();document.getElementById('save-drop').classList.toggle('show');}
+function closeSaveDrop(){document.getElementById('save-drop').classList.remove('show');}
+document.addEventListener('click',()=>closeSaveDrop());
 
 // ═══════════════════════════════════════════════
 //  MOBILE DRAWER
 // ═══════════════════════════════════════════════
-function openMobDrawer()  {
-  syncMobSidebar();
-  document.getElementById('mob-drawer').classList.add('show');
-  document.getElementById('mob-overlay').classList.add('show');
-}
-function closeMobDrawer() {
-  document.getElementById('mob-drawer').classList.remove('show');
-  document.getElementById('mob-overlay').classList.remove('show');
-}
+function openMobDrawer(){syncMobSidebar();document.getElementById('mob-drawer').classList.add('show');document.getElementById('mob-overlay').classList.add('show');}
+function closeMobDrawer(){document.getElementById('mob-drawer').classList.remove('show');document.getElementById('mob-overlay').classList.remove('show');}
 
 // ═══════════════════════════════════════════════
 //  TOASTS
 // ═══════════════════════════════════════════════
-function toast(msg, type='info') {
-  const el = Object.assign(document.createElement('div'), { className:`toast t-${type}`, textContent:msg });
+function toast(msg,type='info'){
+  const el=Object.assign(document.createElement('div'),{className:`toast t-${type}`,textContent:msg});
   document.getElementById('toasts').appendChild(el);
-  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity .3s'; }, 2800);
-  setTimeout(() => el.remove(), 3200);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';},2800);
+  setTimeout(()=>el.remove(),3200);
 }
 
 // ═══════════════════════════════════════════════
 //  KEYBOARD SHORTCUTS
 // ═══════════════════════════════════════════════
-document.addEventListener('keydown', e => {
-  const mod = e.ctrlKey || e.metaKey;
-  if (mod && e.key==='s')         { e.preventDefault(); saveFile('v2'); }
-  if (mod && e.shiftKey && e.key==='S') { e.preventDefault(); saveFile('tblx'); }
-  if (mod && e.key==='Enter')     { e.preventDefault(); addRow(); }
-  if (mod && e.key==='h')         { e.preventDefault(); toggleHex(); }
-  if (mod && e.key==='k')         { e.preventDefault(); toggleCipher(); }
-  if (e.key==='Escape') {
+document.addEventListener('keydown',e=>{
+  const mod=e.ctrlKey||e.metaKey;
+  if(mod&&e.key==='s')          {e.preventDefault();saveFile(S.currentFmt==='tblx'?'tblx':S.currentFmt==='tbly'?'tbly':'tbl');}
+  if(mod&&e.shiftKey&&e.key==='S'){e.preventDefault();saveFile('tbly');}
+  if(mod&&e.key==='z')          {e.preventDefault();undo();}
+  if(mod&&e.key==='y')          {e.preventDefault();redo();}
+  if(mod&&e.key==='Enter')      {e.preventDefault();addRow();}
+  if(mod&&e.key==='h')          {e.preventDefault();toggleHex();}
+  if(mod&&e.key==='k')          {e.preventDefault();toggleCipher();}
+  if(e.key==='Escape'){
     deselectAll();
-    document.querySelectorAll('.overlay.show').forEach(o => o.classList.remove('show'));
-    closeProps(); closeMobDrawer(); closeSaveDrop();
+    document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
+    closeProps();closeMobDrawer();closeSaveDrop();
   }
 });
 
